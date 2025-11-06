@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои заявки - Вычислительный калькулятор</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-calculator"></i>
+                    <span>Вычислительный калькулятор</span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{% url 'index' %}">Главная</a></li>
+                        <li><a href="#" class="active">Мои заявки</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container main-content">
+    <h1 class="page-title">Моя заявка</h1>
+    
+    <div id="order-items-container">
+        <!-- Сюда будут загружаться элементы заявки через JavaScript -->
+    </div>
+    
+    <div class="total-section">
+        <span class="total-label">Всего вычислений:</span>
+        <span class="total-amount" id="total-count">0</span>
+    </div>
+    
+    <div class="order-actions">
+        <button class="btn btn-primary" onclick="saveOrder()">Сохранить заявку</button>
+        <a href="{% url 'index' %}" class="btn btn-secondary">Вернуться к вычислениям</a>
+    </div>
+</div>
+
+<script>
+// Загрузка данных заявки из sessionStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
+    displayOrderItems(orderData);
+});
+
+function displayOrderItems(orderData) {
+    const container = document.getElementById('order-items-container');
+    const totalCount = document.getElementById('total-count');
+    
+    if (orderData.length === 0) {
+        container.innerHTML = '<div class="empty-message">Заявка пуста</div>';
+        totalCount.textContent = '0';
+        return;
+    }
+    
+    let html = '';
+    orderData.forEach((item, index) => {
+        html += `
+            <div class="order-item">
+                <div class="item-header">
+                    <strong>${item.serviceTitle}</strong>
+                    <span class="calculation-date">${item.date}</span>
+                </div>
+                <div class="item-category">Результат:</div>
+                <div class="item-result">${item.result}</div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    totalCount.textContent = orderData.length;
+}
+
+function saveOrder() {
+    const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
+    if (orderData.length === 0) {
+        alert('Заявка пуста!');
+        return;
+    }
+    
+    // Здесь будет логика сохранения заявки (для 3-й лабораторной)
+    alert(`Заявка сохранена! Количество вычислений: ${orderData.length}`);
+    sessionStorage.removeItem('orderData');
+    window.location.href = "{% url 'index' %}";
+}
+</script>
+</body>
+</html>
