@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ service.title }} - Недвижимость</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="logo">Недвижимость</div>
+        <a href="{% url 'order_detail' order_id=1 %}">
+          <div class="cart">
+            🛒
+            <span class="cart-badge">1</span>
+          </div>
+        </a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <h1>
+          <a href="{% url 'index' %}" class="hero-back-link">Назад к услугам</a>
+        </h1>
+      </div>
+    </section>
+
+    <main>
+      <div class="container">
+        <div class="detail-page-card">
+          <div class="detail-page-image"></div>
+
+          <div class="detail-page-content">
+            <div class="property-type">{{ service.category }}</div>
+            <h1 class="detail-page-title">{{ service.title }}</h1>
+            <p class="detail-page-address">{{ service.description }}</p>
+
+            <div class="detail-page-specs no-bg">
+              <div class="spec-item">
+                <span class="spec-icon">📐</span>
+                <div>
+                  <div class="spec-label">Площадь</div>
+                  <div class="spec-value">{{ service.area }} м²</div>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">🚪</span>
+                <div>
+                  <div class="spec-label">Комнат</div>
+                  <div class="spec-value">{{ service.rooms }}</div>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">🏢</span>
+                <div>
+                  <div class="spec-label">Этаж</div>
+                  <div class="spec-value">
+                    {{ service.floor }}/{{ service.total_floors }}
+                  </div>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">🏠</span>
+                <div>
+                  <div class="spec-label">Тип</div>
+                  <div class="spec-value">Квартира</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-page-price">{{ service.price }} ₽</div>
+
+            <div class="info-box">
+              <div class="info-box-header">Описание</div>
+              <div class="info-box-body">
+                <p>{{ service.full_description }}</p>
+              </div>
+            </div>
+
+            <div class="info-box">
+              <div class="info-box-header">Расположение</div>
+              <div class="info-box-body">
+                <p>📍 {{ service.location }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2025 Real Estate. Все права защищены.</p>
+    </footer>
+  </body>
+</html>
