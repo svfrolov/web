@@ -28,10 +28,24 @@ header .container {
   font-size: 24px;
   font-weight: bold;
 }
+
+/* Подхедер с корзиной */
+.subheader {
+  background-color: #f5f5f5;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+.cart-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
 .cart {
   position: relative;
   font-size: 24px;
   cursor: pointer;
+  display: inline-block;
+  /* Убираем margin-left: auto, так как он может вызывать проблемы */
 }
 .cart-badge {
   position: absolute;
@@ -47,11 +61,68 @@ header .container {
   justify-content: center;
   font-size: 12px;
 }
+
+/* Секция поиска */
+.search-section {
+  background-color: transparent;
+  padding: 30px 0;
+  margin-bottom: 20px;
+}
+
+/* Форма поиска */
+.search-form {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr auto; /* Первая колонка растягивается, вторая по размеру контента */
+  gap: 15px;
+  width: 100%;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 15px 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
+.search-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+}
+
+.search-button:hover {
+  background-color: #0056b3;
+}
+
+.search-results {
+  margin: 15px 0 0;
+  font-size: 16px;
+  color: #666;
+}
+
 /* Hero Section */
 .hero {
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   padding: 60px 0;
-  margin-bottom: 40px;
+  margin-bottom: 0; /* Убираем нижний отступ, т.к. теперь за ним следует секция поиска */
 }
 .hero h1 {
   font-size: 36px;
@@ -62,6 +133,7 @@ header .container {
   text-decoration: none;
   font-size: 28px;
   transition: color 0.3s;
+  font-weight: normal;
 }
 .hero-back-link:hover {
   color: #007bff;
@@ -146,6 +218,18 @@ header .container {
   background-color: #007bff;
   color: white;
 }
+
+/* Делаем ссылку "Подробнее" не жирной */
+.property-card a, .hero-back-link {
+  font-weight: normal;
+  text-decoration: none;
+  color: #007bff;
+}
+
+.property-card a:hover {
+  text-decoration: underline;
+}
+
 /* Footer */
 footer {
   background-color: #333;
@@ -166,6 +250,12 @@ footer {
   .hero h1 {
     font-size: 28px;
   }
+  .search-form {
+    grid-template-columns: 1fr;
+  }
+  .search-button {
+    width: 100%;
+  }
 }
 
 /* Breadcrumb */
@@ -177,6 +267,7 @@ footer {
   color: #007bff;
   text-decoration: none;
   font-size: 14px;
+  font-weight: normal;
 }
 .back-link:hover {
   text-decoration: underline;
@@ -612,4 +703,213 @@ footer {
   .cart-section h2 {
     font-size: 16px;
   }
+}
+
+/* Hero Section для страницы корзины */
+.hero {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 40px 0;
+  margin-bottom: 30px;
+}
+
+.hero h1 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.hero-back-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+  display: inline-block;
+  font-weight: normal;
+}
+
+.hero-back-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Секция с таблицей заявки */
+.request-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.request-section h2 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Таблица объектов */
+.request-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.request-table thead {
+  background-color: #f8f9fa;
+}
+
+.request-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.request-table td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #666;
+  font-size: 14px;
+}
+
+.request-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Стили для старой карточки корзины */
+.order-table-container {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: normal;
+}
+
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.order-table th,
+.order-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.order-table th {
+  background-color: #f8f9fa;
+  font-weight: normal;
+  color: #333;
+}
+
+.status-button {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: none;
+  font-size: 14px;
+  font-weight: normal;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+}
+
+.status-button.completed {
+  background-color: #007bff;
+  color: white;
+}
+
+.customer-info {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Кнопка "Завершено" */
+.status-completed {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 14px;
+  cursor: default;
+}
+
+/* Секция информации о клиенте */
+.client-info-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.client-info-section h2 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #f8f9fa;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  background-color: white;
+}
+
+/* Кнопка сохранения */
+.save-button {
+  background-color: #007bff;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.save-button:hover {
+  background-color: #0056b3;
 }
