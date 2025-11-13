@@ -2,43 +2,46 @@ from django.shortcuts import render, get_object_or_404
 from datetime import date
 
 def index(request):
-    """Главная страница с недвижимостью"""
+    """Главная страница с корпусами МГТУ"""
     services_data = [
         {
             'id': 1,
-            'title': 'ЖК Ильинские луга',
-            'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-            'category': 'Квартира',
-            'icon': 'fa-building',
-            'area': '54,80',
-            'rooms': '1',
-            'floor': '8',
-            'total_floors': '24',
-            'price': '5 500 000'
+            'title': 'Главный учебный корпус МГТУ',
+            'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+            'category': 'Учебный корпус',
+            'icon': 'fa-university',
+            'area': '25000',
+            'rooms': '200',
+            'floor': '5',
+            'total_floors': '5',
+            'price': '150 000 000',
+            'image_url': '/static/images/building1.jpg'  # Прямая ссылка на локальное изображение
         },
         {
             'id': 2,
-            'title': 'ЖК Ильинские луга',
-            'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-            'category': 'Квартира',
-            'icon': 'fa-building',
-            'area': '74,80',
-            'rooms': '2',
-            'floor': '8',
-            'total_floors': '24',
-            'price': '7 500 000'
+            'title': 'Учебно-лабораторный корпус МГТУ',
+            'description': 'г. Москва, Рубцовская наб., д. 2/18',
+            'category': 'Лабораторный корпус',
+            'icon': 'fa-flask',
+            'area': '18000',
+            'rooms': '150',
+            'floor': '7',
+            'total_floors': '7',
+            'price': '120 000 000',
+            'image_url': '/static/images/building2.jpg'  # Прямая ссылка на локальное изображение
         },
         {
             'id': 3,
-            'title': 'ЖК Ильинские луга',
-            'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-            'category': 'Квартира',
-            'icon': 'fa-building',
-            'area': '94,80',
-            'rooms': '3',
-            'floor': '8',
-            'total_floors': '24',
-            'price': '9 500 000'
+            'title': 'Спортивный комплекс МГТУ',
+            'description': 'г. Москва, Госпитальная наб., д. 4/2',
+            'category': 'Спорткомплекс',
+            'icon': 'fa-dumbbell',
+            'area': '12000',
+            'rooms': '50',
+            'floor': '3',
+            'total_floors': '3',
+            'price': '80 000 000',
+            'image_url': '/static/images/building3.png'  # Прямая ссылка на локальное изображение
         }
     ]
 
@@ -61,46 +64,49 @@ def index(request):
     return render(request, 'services_app/index.html', context)
 
 def service_detail(request, id):
-    """Страница деталей объекта недвижимости"""
+    """Страница деталей корпуса МГТУ"""
     services_data = {
         1: {
-            'title': 'ЖК Ильинские луга',
-            'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-            'category': 'Квартира',
-            'icon': 'fa-building',
-            'area': '54,80',
-            'rooms': '1',
-            'floor': '8',
-            'total_floors': '24',
-            'price': '5 500 000',
-            'full_description': 'Просторная однокомнатная квартира в новом жилом комплексе. Светлая и уютная квартира с качественным ремонтом. Развитая инфраструктура района.',
-            'location': 'Московская область, г. Красногорск, Ильинское шоссе'
+            'title': 'Главный корпус МГТУ',
+            'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+            'category': 'Учебный корпус',
+            'icon': 'fa-university',
+            'area': '25000',
+            'rooms': '200',
+            'floor': '5',
+            'total_floors': '5',
+            'price': '150 000 000',
+            'full_description': 'Главный корпус МГТУ им. Н.Э. Баумана - историческое здание, в котором расположены основные факультеты и администрация университета. Здесь проходят занятия студентов большинства технических специальностей.',
+            'location': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+            'image_url': '/static/images/building1.jpg'  # Прямая ссылка на локальное изображение
         },
         2: {
-            'title': 'ЖК Ильинские луга',
-            'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-            'category': 'Квартира',
-            'icon': 'fa-building',
-            'area': '74,80',
-            'rooms': '2',
-            'floor': '8',
-            'total_floors': '24',
-            'price': '7 500 000',
-            'full_description': 'Просторная двухкомнатная квартира в новом жилом комплексе. Светлая и уютная квартира с качественным ремонтом. Развитая инфраструктура района.',
-            'location': 'Московская область, г. Красногорск, Ильинское шоссе'
+            'title': 'Учебно-лабораторный корпус МГТУ',
+            'description': 'г. Москва, Рубцовская наб., д. 2/18',
+            'category': 'Лабораторный корпус',
+            'icon': 'fa-flask',
+            'area': '18000',
+            'rooms': '150',
+            'floor': '7',
+            'total_floors': '7',
+            'price': '120 000 000',
+            'full_description': 'Учебно-лабораторный корпус МГТУ им. Н.Э. Баумана оснащен современным оборудованием для проведения научных исследований и лабораторных работ. Здесь расположены специализированные лаборатории и научные центры.',
+            'location': 'г. Москва, Рубцовская наб., д. 2/18',
+            'image_url': '/static/images/building2.jpg'  # Прямая ссылка на локальное изображение
         },
         3: {
-            'title': 'ЖК Ильинские луга',
-            'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-            'category': 'Квартира',
-            'icon': 'fa-building',
-            'area': '94,80',
-            'rooms': '3',
-            'floor': '8',
-            'total_floors': '24',
-            'price': '9 500 000',
-            'full_description': 'Просторная трехкомнатная квартира в новом жилом комплексе. Светлая и уютная квартира с качественным ремонтом. Развитая инфраструктура района.',
-            'location': 'Московская область, г. Красногорск, Ильинское шоссе'
+            'title': 'Спортивный комплекс МГТУ',
+            'description': 'г. Москва, Госпитальная наб., д. 4/2',
+            'category': 'Спорткомплекс',
+            'icon': 'fa-dumbbell',
+            'area': '12000',
+            'rooms': '50',
+            'floor': '3',
+            'total_floors': '3',
+            'price': '80 000 000',
+            'full_description': 'Спортивный комплекс МГТУ им. Н.Э. Баумана включает в себя бассейн, тренажерные залы, залы для игровых видов спорта и легкой атлетики. Здесь проводятся занятия по физической культуре и тренировки спортивных команд университета.',
+            'location': 'г. Москва, Госпитальная наб., д. 4/2',
+            'image_url': '/static/images/building3.png'  # Прямая ссылка на локальное изображение
         }
     }
 
@@ -113,51 +119,51 @@ def service_detail(request, id):
     }
     return render(request, 'services_app/service_detail.html', context)
 
-def order_detail(request, order_id):
-    """Страница детального просмотра заявки"""
-    # Словарь с данными заявки (заполняется готовыми данными)
-    orders_data = {
+def build_request_detail(request, order_id):
+    """Страница детального просмотра строительной заявки"""
+    # Словарь с данными строительной заявки (заполняется готовыми данными)
+    build_requests_data = {
         1: {
             'id': 1,
             'user_name': 'Иван Иванов',
             'service': {
-                'title': 'ЖК Ильинские луга',
-                'description': 'Московская область, г. Красногорск, Ильинское шоссе',
-                'category': 'Квартира',
-                'icon': 'fa-building',
-                'area': '54,80',
-                'rooms': '1',
-                'floor': '8',
-                'total_floors': '24',
-                'price': '5 500 000'
+                'title': 'Главный корпус МГТУ',
+                'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+                'category': 'Учебный корпус',
+                'icon': 'fa-university',
+                'area': '25000',
+                'rooms': '200',
+                'floor': '5',
+                'total_floors': '5',
+                'price': '150 000 000'
             },
-            'operand': 'Просмотр',
-            'result': 'Запись на просмотр',
+            'operand': 'Реконструкция',
+            'result': 'Запись на реконструкцию',
             'status': 'completed',
             'created_date': '15.09.2025',
             'get_status_display': 'Завершено'
         }
     }
 
-    order = orders_data.get(order_id)
+    build_request = build_requests_data.get(order_id)
     
-    if not order:
-        # Если заявка не найдена, можно создать заглушку
-        order = {
+    if not build_request:
+        # Если строительная заявка не найдена, можно создать заглушку
+        build_request = {
             'id': order_id,
             'user_name': 'Пользователь',
             'service': {
-                'title': 'Объект недвижимости',
-                'description': 'Описание объекта',
-                'category': 'Категория',
-                'icon': 'fa-building',
+                'title': 'Корпус МГТУ',
+                'description': 'Адрес корпуса',
+                'category': 'Тип корпуса',
+                'icon': 'fa-university',
                 'area': '0',
                 'rooms': '0',
                 'floor': '0',
                 'total_floors': '0',
                 'price': '0'
             },
-            'operand': 'Данные',
+            'operand': 'Реконструкция',
             'result': 'Результат',
             'status': 'completed',
             'created_date': date.today().strftime('%d.%m.%Y'),
@@ -165,7 +171,7 @@ def order_detail(request, order_id):
         }
 
     context = {
-        'order': order,
+        'build_request': build_request,
         'current_date': date.today()
     }
-    return render(request, 'services_app/order_detail.html', context)
+    return render(request, 'services_app/build_request_detail.html', context)

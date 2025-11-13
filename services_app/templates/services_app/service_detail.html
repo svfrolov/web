@@ -3,70 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ service.title }} - Недвижимость</title>
+    <title>{{ service.title }} - Строй контроль</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+      .detail-page-image {
+        width: 100%;
+        height: 280px;
+        overflow: hidden;
+        position: relative;
+      }
+      
+      .detail-page-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
   </head>
   <body>
     <header>
       <div class="container">
-        <div class="logo">Недвижимость</div>
-        <a href="{% url 'order_detail' order_id=1 %}">
-          <div class="cart">
-            🛒
-            <span class="cart-badge">1</span>
-          </div>
-        </a>
+        <div class="home-link">
+          <a href="{% url 'index' %}">🏠 Домой</a>
+        </div>
+        <div class="logo">Строй контроль</div>
+        <div class="header-right"></div>
       </div>
     </header>
 
-    <section class="hero">
+    <!-- Подхедер с корзиной -->
+    <div class="subheader">
       <div class="container">
-        <h1>
-          <a href="{% url 'index' %}" class="hero-back-link">Назад к услугам</a>
-        </h1>
+        <div class="cart-container">
+          <a href="{% url 'build_request_detail' order_id=1 %}">
+            <div class="cart">
+              🛒
+              <span class="cart-badge">1</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <div class="container">
+        <p>
+          <a href="{% url 'index' %}" class="hero-back-link"
+            >Назад к корпусам</a
+          >
+        </p>
       </div>
     </section>
 
     <main>
       <div class="container">
         <div class="detail-page-card">
-          <div class="detail-page-image"></div>
+          <!-- Используем тег img вместо фонового изображения -->
+          <div class="detail-page-image">
+            {% if service_id == 1 %}
+              <img src="{% static 'images/building1.jpg' %}" alt="{{ service.title }}">
+            {% elif service_id == 2 %}
+              <img src="{% static 'images/building2.jpg' %}" alt="{{ service.title }}">
+            {% elif service_id == 3 %}
+              <img src="{% static 'images/building3.png' %}" alt="{{ service.title }}">
+            {% endif %}
+          </div>
 
           <div class="detail-page-content">
             <div class="property-type">{{ service.category }}</div>
             <h1 class="detail-page-title">{{ service.title }}</h1>
-            <p class="detail-page-address">{{ service.description }}</p>
+            <p class="address">{{ service.description }}</p>
 
-            <div class="detail-page-specs no-bg">
+            <div class="detail-page-specs">
               <div class="spec-item">
-                <span class="spec-icon">📐</span>
+                <span class="spec-icon"></span>
                 <div>
                   <div class="spec-label">Площадь</div>
                   <div class="spec-value">{{ service.area }} м²</div>
                 </div>
               </div>
               <div class="spec-item">
-                <span class="spec-icon">🚪</span>
+                <span class="spec-icon"></span>
                 <div>
-                  <div class="spec-label">Комнат</div>
+                  <div class="spec-label">Помещений</div>
                   <div class="spec-value">{{ service.rooms }}</div>
                 </div>
               </div>
               <div class="spec-item">
-                <span class="spec-icon">🏢</span>
+                <span class="spec-icon"></span>
                 <div>
-                  <div class="spec-label">Этаж</div>
+                  <div class="spec-label">Этажей</div>
                   <div class="spec-value">
                     {{ service.floor }}/{{ service.total_floors }}
                   </div>
                 </div>
               </div>
               <div class="spec-item">
-                <span class="spec-icon">🏠</span>
+                <span class="spec-icon"></span>
                 <div>
                   <div class="spec-label">Тип</div>
-                  <div class="spec-value">Квартира</div>
+                  <div class="spec-value">{{ service.category }}</div>
                 </div>
               </div>
             </div>
@@ -92,7 +129,7 @@
     </main>
 
     <footer>
-      <p>© 2025 Real Estate. Все права защищены.</p>
+      <p>© 2025 Строй контроль. Все права защищены.</p>
     </footer>
   </body>
 </html>
