@@ -1,49 +1,72 @@
 from django.shortcuts import render, get_object_or_404
 from datetime import date
+from .models import Product
 
 def index(request):
     """Главная страница с корпусами МГТУ"""
-    services_data = [
-        {
-            'id': 1,
-            'title': 'Главный учебный корпус МГТУ',
-            'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
-            'category': 'Учебный корпус',
-            'icon': 'fa-university',
-            'area': '25000',
-            'rooms': '200',
-            'floor': '5',
-            'total_floors': '5',
-            'price': '150 000 000',
-            'image_url': '/static/images/building1.jpg'  # Прямая ссылка на локальное изображение
-        },
-        {
-            'id': 2,
-            'title': 'Учебно-лабораторный корпус МГТУ',
-            'description': 'г. Москва, Рубцовская наб., д. 2/18',
-            'category': 'Лабораторный корпус',
-            'icon': 'fa-flask',
-            'area': '18000',
-            'rooms': '150',
-            'floor': '7',
-            'total_floors': '7',
-            'price': '120 000 000',
-            'image_url': '/static/images/building2.jpg'  # Прямая ссылка на локальное изображение
-        },
-        {
-            'id': 3,
-            'title': 'Спортивный комплекс МГТУ',
-            'description': 'г. Москва, Госпитальная наб., д. 4/2',
-            'category': 'Спорткомплекс',
-            'icon': 'fa-dumbbell',
-            'area': '12000',
-            'rooms': '50',
-            'floor': '3',
-            'total_floors': '3',
-            'price': '80 000 000',
-            'image_url': '/static/images/building3.png'  # Прямая ссылка на локальное изображение
-        }
-    ]
+    # Получаем все товары из базы данных
+    products = Product.objects.all()
+    
+    # Если товаров нет, используем демо-данные
+    if not products:
+        services_data = [
+            {
+                'id': 1,
+                'title': 'Главный учебный корпус МГТУ',
+                'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+                'category': 'Учебный корпус',
+                'icon': 'fa-university',
+                'area': '25000',
+                'rooms': '200',
+                'floor': '5',
+                'total_floors': '5',
+                'price': '150 000 000',
+                'image_url': '/static/images/building1.jpg'
+            },
+            {
+                'id': 2,
+                'title': 'Учебно-лабораторный корпус МГТУ',
+                'description': 'г. Москва, Рубцовская наб., д. 2/18',
+                'category': 'Лабораторный корпус',
+                'icon': 'fa-flask',
+                'area': '18000',
+                'rooms': '150',
+                'floor': '7',
+                'total_floors': '7',
+                'price': '120 000 000',
+                'image_url': '/static/images/building2.jpg'
+            },
+            {
+                'id': 3,
+                'title': 'Спортивный комплекс МГТУ',
+                'description': 'г. Москва, Госпитальная наб., д. 4/2',
+                'category': 'Спорткомплекс',
+                'icon': 'fa-dumbbell',
+                'area': '12000',
+                'rooms': '50',
+                'floor': '3',
+                'total_floors': '3',
+                'price': '80 000 000',
+                'image_url': '/static/images/building3.png'
+            }
+        ]
+    else:
+        # Преобразуем объекты Product в словари для шаблона
+        services_data = []
+        for product in products:
+            services_data.append({
+                'id': product.id,
+                'title': product.title,
+                'description': product.description,
+                'category': product.category,
+                'icon': product.icon,
+                'area': product.area,
+                'rooms': product.rooms,
+                'floor': product.floor,
+                'total_floors': product.total_floors,
+                'price': product.price,
+                'image_url': product.image_url or '/static/images/building1.jpg'  # Используем URL из MinIO или дефолтное изображение
+            })
 
     # Обработка поиска
     search_query = request.GET.get('search', '').strip()
@@ -65,52 +88,72 @@ def index(request):
 
 def service_detail(request, id):
     """Страница деталей корпуса МГТУ"""
-    services_data = {
-        1: {
-            'title': 'Главный корпус МГТУ',
-            'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
-            'category': 'Учебный корпус',
-            'icon': 'fa-university',
-            'area': '25000',
-            'rooms': '200',
-            'floor': '5',
-            'total_floors': '5',
-            'price': '150 000 000',
-            'full_description': 'Главный корпус МГТУ им. Н.Э. Баумана - историческое здание, в котором расположены основные факультеты и администрация университета. Здесь проходят занятия студентов большинства технических специальностей.',
-            'location': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
-            'image_url': '/static/images/building1.jpg'  # Прямая ссылка на локальное изображение
-        },
-        2: {
-            'title': 'Учебно-лабораторный корпус МГТУ',
-            'description': 'г. Москва, Рубцовская наб., д. 2/18',
-            'category': 'Лабораторный корпус',
-            'icon': 'fa-flask',
-            'area': '18000',
-            'rooms': '150',
-            'floor': '7',
-            'total_floors': '7',
-            'price': '120 000 000',
-            'full_description': 'Учебно-лабораторный корпус МГТУ им. Н.Э. Баумана оснащен современным оборудованием для проведения научных исследований и лабораторных работ. Здесь расположены специализированные лаборатории и научные центры.',
-            'location': 'г. Москва, Рубцовская наб., д. 2/18',
-            'image_url': '/static/images/building2.jpg'  # Прямая ссылка на локальное изображение
-        },
-        3: {
-            'title': 'Спортивный комплекс МГТУ',
-            'description': 'г. Москва, Госпитальная наб., д. 4/2',
-            'category': 'Спорткомплекс',
-            'icon': 'fa-dumbbell',
-            'area': '12000',
-            'rooms': '50',
-            'floor': '3',
-            'total_floors': '3',
-            'price': '80 000 000',
-            'full_description': 'Спортивный комплекс МГТУ им. Н.Э. Баумана включает в себя бассейн, тренажерные залы, залы для игровых видов спорта и легкой атлетики. Здесь проводятся занятия по физической культуре и тренировки спортивных команд университета.',
-            'location': 'г. Москва, Госпитальная наб., д. 4/2',
-            'image_url': '/static/images/building3.png'  # Прямая ссылка на локальное изображение
+    # Пытаемся найти товар в базе данных
+    product = Product.objects.filter(id=id).first()
+    
+    if product:
+        # Если товар найден, используем его данные
+        service = {
+            'title': product.title,
+            'description': product.description,
+            'category': product.category,
+            'icon': product.icon,
+            'area': product.area,
+            'rooms': product.rooms,
+            'floor': product.floor,
+            'total_floors': product.total_floors,
+            'price': product.price,
+            'full_description': product.full_description,
+            'location': product.location,
+            'image_url': product.image_url or '/static/images/building1.jpg'  # Используем URL из MinIO или дефолтное изображение
         }
-    }
-
-    service = services_data.get(id, {})
+    else:
+        # Если товар не найден, используем демо-данные
+        services_data = {
+            1: {
+                'title': 'Главный корпус МГТУ',
+                'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+                'category': 'Учебный корпус',
+                'icon': 'fa-university',
+                'area': '25000',
+                'rooms': '200',
+                'floor': '5',
+                'total_floors': '5',
+                'price': '150 000 000',
+                'full_description': 'Главный корпус МГТУ им. Н.Э. Баумана - историческое здание, в котором расположены основные факультеты и администрация университета. Здесь проходят занятия студентов большинства технических специальностей.',
+                'location': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
+                'image_url': '/static/images/building1.jpg'
+            },
+            2: {
+                'title': 'Учебно-лабораторный корпус МГТУ',
+                'description': 'г. Москва, Рубцовская наб., д. 2/18',
+                'category': 'Лабораторный корпус',
+                'icon': 'fa-flask',
+                'area': '18000',
+                'rooms': '150',
+                'floor': '7',
+                'total_floors': '7',
+                'price': '120 000 000',
+                'full_description': 'Учебно-лабораторный корпус МГТУ им. Н.Э. Баумана оснащен современным оборудованием для проведения научных исследований и лабораторных работ. Здесь расположены специализированные лаборатории и научные центры.',
+                'location': 'г. Москва, Рубцовская наб., д. 2/18',
+                'image_url': '/static/images/building2.jpg'
+            },
+            3: {
+                'title': 'Спортивный комплекс МГТУ',
+                'description': 'г. Москва, Госпитальная наб., д. 4/2',
+                'category': 'Спорткомплекс',
+                'icon': 'fa-dumbbell',
+                'area': '12000',
+                'rooms': '50',
+                'floor': '3',
+                'total_floors': '3',
+                'price': '80 000 000',
+                'full_description': 'Спортивный комплекс МГТУ им. Н.Э. Баумана включает в себя бассейн, тренажерные залы, залы для игровых видов спорта и легкой атлетики. Здесь проводятся занятия по физической культуре и тренировки спортивных команд университета.',
+                'location': 'г. Москва, Госпитальная наб., д. 4/2',
+                'image_url': '/static/images/building3.png'
+            }
+        }
+        service = services_data.get(id, services_data.get(1, {}))
 
     context = {
         'service': service,
@@ -126,6 +169,9 @@ def build_request_detail(request, order_id):
         1: {
             'id': 1,
             'user_name': 'Иван Иванов',
+            'phone': '+7 (999) 123-45-67',
+            'email': 'ivanov@example.com',
+            'payment_method': 'наличные',
             'service': {
                 'title': 'Главный корпус МГТУ',
                 'description': 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
@@ -135,7 +181,8 @@ def build_request_detail(request, order_id):
                 'rooms': '200',
                 'floor': '5',
                 'total_floors': '5',
-                'price': '150 000 000'
+                'price': '150 000 000',
+                'image_url': '/static/images/building1.jpg'  # Добавлен URL изображения
             },
             'operand': 'Реконструкция',
             'result': 'Запись на реконструкцию',
@@ -152,6 +199,9 @@ def build_request_detail(request, order_id):
         build_request = {
             'id': order_id,
             'user_name': 'Пользователь',
+            'phone': '+7 (999) 999-99-99',
+            'email': 'user@example.com',
+            'payment_method': 'наличные',
             'service': {
                 'title': 'Корпус МГТУ',
                 'description': 'Адрес корпуса',
@@ -161,7 +211,8 @@ def build_request_detail(request, order_id):
                 'rooms': '0',
                 'floor': '0',
                 'total_floors': '0',
-                'price': '0'
+                'price': '0',
+                'image_url': '/static/images/building1.jpg'  # Добавлен URL изображения по умолчанию
             },
             'operand': 'Реконструкция',
             'result': 'Результат',

@@ -6,6 +6,14 @@
     <title>Строительная заявка - Строй контроль</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+      .product-thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -17,20 +25,6 @@
         <div class="header-right"></div>
       </div>
     </header>
-
-    <!-- Подхедер с корзиной -->
-    <div class="subheader">
-      <div class="container">
-        <div class="cart-container">
-          <a href="{% url 'build_request_detail' order_id=1 %}">
-            <div class="cart">
-              🛒
-              <span class="cart-badge">1</span>
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
 
     <section>
       <div class="container">
@@ -44,34 +38,7 @@
 
     <main>
       <div class="container">
-        <!-- Таблица корпусов -->
-        <div class="order-table-container">
-          <h2 class="section-title">
-            Корпусы МГТУ в строительной заявке #{{ build_request.id }}
-          </h2>
-          <table class="order-table">
-            <thead>
-              <tr>
-                <th>№</th>
-                <th>Корпус</th>
-                <th>Заключение комиссии</th>
-                <th>Процент готовности</th>
-                <th>Результат</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>{{ build_request.service.title }}</td>
-                <td>Работы выполнены в соответствии с требованиями</td>
-                <td>100%</td>
-                <td>5.0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Информация о клиенте -->
+        <!-- Информация о клиенте (перемещена вверх) -->
         <div class="customer-info">
           <h2 class="section-title">Информация о заказчике</h2>
           <form class="customer-form">
@@ -106,13 +73,42 @@
               <div class="form-group">
                 <label>Способ оплаты*</label>
                 <input
-                  type="email"
-                  value="{{ build_request.email }}"
+                  type="text"
+                  value="{{ build_request.payment_method }}"
                   placeholder="наличные"
                 />
               </div>
             </div>
           </form>
+        </div>
+        
+        <!-- Таблица корпусов (перемещена вниз) -->
+        <div class="order-table-container">
+          <h2 class="section-title">
+            Корпусы МГТУ в строительной заявке #{{ build_request.id }}
+          </h2>
+          <table class="order-table">
+            <thead>
+              <tr>
+                <th>Img</th>
+                <th>Корпус</th>
+                <th>Заключение комиссии</th>
+                <th>Процент готовности</th>
+                <th>Результат</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <img src="{{ build_request.service.image_url }}" class="product-thumbnail" alt="{{ build_request.service.title }}">
+                </td>
+                <td>{{ build_request.service.title }}</td>
+                <td>Работы выполнены в соответствии с требованиями</td>
+                <td>100%</td>
+                <td>5.0</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
