@@ -32,19 +32,7 @@
       </div>
     </header>
 
-    <!-- Подхедер с корзиной -->
-    <div class="subheader">
-      <div class="container">
-        <div class="cart-container">
-          <a href="{% url 'build_request_detail' order_id=1 %}">
-            <div class="cart">
-              🛒
-              <span class="cart-badge">1</span>
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
+    <!-- Убираем подхедер с корзиной -->
 
     <section>
       <div class="container">
@@ -59,15 +47,9 @@
     <main>
       <div class="container">
         <div class="detail-page-card">
-          <!-- Используем тег img вместо фонового изображения -->
+          <!-- Используем URL изображения из MinIO -->
           <div class="detail-page-image">
-            {% if service_id == 1 %}
-              <img src="{% static 'images/building1.jpg' %}" alt="{{ service.title }}">
-            {% elif service_id == 2 %}
-              <img src="{% static 'images/building2.jpg' %}" alt="{{ service.title }}">
-            {% elif service_id == 3 %}
-              <img src="{% static 'images/building3.png' %}" alt="{{ service.title }}">
-            {% endif %}
+            <img src="{{ service.image_url }}" alt="{{ service.title }}">
           </div>
 
           <div class="detail-page-content">

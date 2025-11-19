@@ -94,15 +94,9 @@
         <div class="properties-grid">
           {% for service in services %}
           <div class="property-card">
-            <!-- Используем тег img вместо фонового изображения -->
+            <!-- Используем URL изображения из MinIO -->
             <div class="property-image">
-              {% if service.id == 1 %}
-                <img src="{% static 'images/building1.jpg' %}" alt="{{ service.title }}">
-              {% elif service.id == 2 %}
-                <img src="{% static 'images/building2.jpg' %}" alt="{{ service.title }}">
-              {% elif service.id == 3 %}
-                <img src="{% static 'images/building3.png' %}" alt="{{ service.title }}">
-              {% endif %}
+              <img src="{{ service.image_url }}" alt="{{ service.title }}">
             </div>
             <div class="property-content">
               <div class="property-type">{{ service.category }}</div>

@@ -5,10 +5,10 @@ from datetime import timedelta
 
 # Настройки клиента MinIO
 minio_client = Minio(
-    "play.min.io",  # Публичный демо-сервер MinIO
-    access_key="Q3AM3UQ867SPQQA43P2F",  # Демо-ключ доступа
-    secret_key="zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",  # Демо-секретный ключ
-    secure=True  # Использовать HTTPS
+    "play.min.io",  # Замените на ваш хост MinIO
+    access_key="Q3AM3UQ867SPQQA43P2F",  # Замените на ваш access key
+    secret_key="zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",  # Замените на ваш secret key
+    secure=True
 )
 
 # Имя бакета для хранения изображений
@@ -30,7 +30,6 @@ def get_image_url(object_name):
     """Получает URL для доступа к изображению"""
     try:
         # Получаем временную ссылку на файл (действительна 7 дней)
-        # Используем timedelta вместо целого числа
         url = minio_client.presigned_get_object(
             BUCKET_NAME, 
             object_name, 
