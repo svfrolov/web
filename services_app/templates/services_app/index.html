@@ -6,6 +6,10 @@
     <title>Строй контроль</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
     <style>
       .property-image {
         width: 100%;
@@ -13,11 +17,44 @@
         overflow: hidden;
         position: relative;
       }
-      
+
       .property-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+      }
+
+      .property-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+
+      .property-actions a,
+      .property-actions button {
+        flex: 1;
+        margin: 0 5px;
+        text-align: center;
+      }
+
+      .messages {
+        margin-bottom: 20px;
+      }
+
+      .messages .message {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+
+      .messages .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .messages .error {
+        background-color: #f8d7da;
+        color: #721c24;
       }
     </style>
   </head>
@@ -28,7 +65,11 @@
           <a href="{% url 'index' %}">🏠 Домой</a>
         </div>
         <div class="logo">Строй контроль</div>
-        <div class="header-right"></div>
+        <div class="header-right">
+          {% if user.is_authenticated %}
+          <span>{{ user.username }}</span>
+          {% endif %}
+        </div>
       </div>
     </header>
 
@@ -36,19 +77,37 @@
     <div class="subheader">
       <div class="container">
         <div class="cart-container">
-          <a href="{% url 'build_request_detail' order_id=1 %}">
+          {% if user.is_authenticated and current_request %}
+          <a href="{% url 'view_request' %}">
             <div class="cart">
               🛒
-              <span class="cart-badge">1</span>
+              <span class="cart-badge">{{ current_request.construction_items.count }}</span>
             </div>
           </a>
+          {% else %}
+          <div class="cart disabled">
+            🛒
+            <span class="cart-badge">0</span>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
 
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="container">
+      <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <section>
       <div class="container">
-        <h1>Каталог корпусов МГТУ</h1>
+        <h1>Каталог строительных объектов</h1>
       </div>
     </section>
 
@@ -59,7 +118,7 @@
           <input
             type="text"
             name="search"
-            placeholder="Поиск по корпусам МГТУ..."
+            placeholder="Поиск по строительным объектам..."
             value="{{ search_query }}"
           />
           <a
@@ -89,14 +148,15 @@
       </div>
     </section>
 
+    {% block content %}
     <main>
       <div class="container">
         <div class="properties-grid">
           {% for service in services %}
           <div class="property-card">
-            <!-- Используем URL изображения из MinIO -->
+            <!-- Используем URL изображения -->
             <div class="property-image">
-              <img src="{{ service.image_url }}" alt="{{ service.title }}">
+              <img src="{{ service.image_url }}" alt="{{ service.title }}" />
             </div>
             <div class="property-content">
               <div class="property-type">{{ service.category }}</div>
@@ -104,26 +164,41 @@
               <p class="address">{{ service.description }}</p>
               <div class="specs">
                 <span>{{ service.area }} м²</span>
-                <span>{{ service.rooms }} помещений</span>
-                <span>{{ service.floor }}/{{ service.total_floors }} эт.</span>
+                <span>{{ service.total_floors }} этаж(ей)</span>
               </div>
               <div class="price">{{ service.price }} ₽</div>
-              <a
-                href="{% url 'service_detail' service.id %}"
-                class="hero-back-link"
-                >Подробнее</a
-              >
+              <div class="property-actions">
+                <a
+                  href="{% url 'service_detail' service.id %}"
+                  class="hero-back-link"
+                  >Подробнее</a
+                >
+
+                {% if user.is_authenticated %}
+                <form
+                  method="post"
+                  action="{% url 'add_to_request' service.id %}"
+                >
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{% url 'index' %}" />
+                  <button type="submit" class="hero-back-link">
+                    <i class="fas fa-cart-plus"></i> В заявку
+                  </button>
+                </form>
+                {% endif %}
+              </div>
             </div>
           </div>
           {% empty %}
           <div class="no-services">
-            <h3>Корпусы не найдены</h3>
+            <h3>Объекты не найдены</h3>
             <p>Попробуйте изменить поисковый запрос</p>
           </div>
           {% endfor %}
         </div>
       </div>
     </main>
+    {% endblock %}
 
     <footer>
       <p>© 2025 Строй контроль. Все права защищены.</p>

@@ -1,0 +1,77 @@
+{% extends 'services_app/index.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <section>
+                <div class="container">
+                    <p>
+                        <a href="{% url 'index' %}" class="hero-back-link">Назад к объектам</a>
+                    </p>
+                </div>
+            </section>
+            
+            <h1 class="mb-4">Ваша текущая заявка на строительство</h1>
+            
+            {% if request_items %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Заявка #{{ construction_request.id }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Изображение</th>
+                                        <th>Объект</th>
+                                        <th>Местоположение</th>
+                                        <th>Площадь</th>
+                                        <th>Количество</th>
+                                        <th>Порядковый номер</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in request_items %}
+                                    <tr>
+                                        <td style="width: 80px;">
+                                            <img src="{{ item.building_object.image_url|default:'/static/images/building1.jpg' }}" 
+                                                 alt="{{ item.building_object.name }}" 
+                                                 style="width: 70px; height: 50px; object-fit: cover;">
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'service_detail' item.building_object.id %}">
+                                                {{ item.building_object.name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ item.building_object.location }}</td>
+                                        <td>{{ item.building_object.area }} м²</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.order_number }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-5 mb-5">
+                    <form method="post" action="{% url 'delete_request' construction_request.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="hero-back-link" style="background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer;">
+                            Удалить заявку
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <p>В вашей заявке нет строительных объектов.</p>
+                    <a href="{% url 'index' %}" class="btn btn-primary mt-2">Перейти к выбору объектов</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,7 @@
     <title>{{ service.title }} - Строй контроль</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
       .detail-page-image {
         width: 100%;
@@ -19,6 +20,54 @@
         height: 100%;
         object-fit: cover;
       }
+      
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      
+      .action-buttons .btn {
+        padding: 10px 20px;
+        border-radius: 4px;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+        cursor: pointer;
+        border: none;
+        font-size: 16px;
+      }
+      
+      .action-buttons .btn-primary {
+        background-color: #007bff;
+        color: white;
+      }
+      
+      .action-buttons .btn-outline-primary {
+        background-color: transparent;
+        color: #007bff;
+        border: 1px solid #007bff;
+      }
+      
+      .messages {
+        margin-bottom: 20px;
+      }
+      
+      .messages .message {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+      
+      .messages .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      
+      .messages .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
     </style>
   </head>
   <body>
@@ -28,17 +77,53 @@
           <a href="{% url 'index' %}">🏠 Домой</a>
         </div>
         <div class="logo">Строй контроль</div>
-        <div class="header-right"></div>
+        <div class="header-right">
+          {% if user.is_authenticated %}
+            <span>{{ user.username }}</span>
+          {% endif %}
+        </div>
       </div>
     </header>
 
-    <!-- Убираем подхедер с корзиной -->
+    <!-- Подхедер с корзиной -->
+    <div class="subheader">
+      <div class="container">
+        <div class="cart-container">
+          {% if user.is_authenticated and current_request %}
+            <a href="{% url 'view_request' %}">
+              <div class="cart">
+                🛒
+                <span class="cart-badge">{{ current_request.construction_items.count }}</span>
+              </div>
+            </a>
+          {% else %}
+            <div class="cart disabled">
+              🛒
+              <span class="cart-badge">0</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="container">
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     <section>
       <div class="container">
         <p>
           <a href="{% url 'index' %}" class="hero-back-link"
-            >Назад к корпусам</a
+            >Назад к объектам</a
           >
         </p>
       </div>
@@ -47,7 +132,7 @@
     <main>
       <div class="container">
         <div class="detail-page-card">
-          <!-- Используем URL изображения из MinIO -->
+          <!-- Используем URL изображения -->
           <div class="detail-page-image">
             <img src="{{ service.image_url }}" alt="{{ service.title }}">
           </div>
@@ -68,17 +153,8 @@
               <div class="spec-item">
                 <span class="spec-icon"></span>
                 <div>
-                  <div class="spec-label">Помещений</div>
-                  <div class="spec-value">{{ service.rooms }}</div>
-                </div>
-              </div>
-              <div class="spec-item">
-                <span class="spec-icon"></span>
-                <div>
                   <div class="spec-label">Этажей</div>
-                  <div class="spec-value">
-                    {{ service.floor }}/{{ service.total_floors }}
-                  </div>
+                  <div class="spec-value">{{ service.total_floors }}</div>
                 </div>
               </div>
               <div class="spec-item">
@@ -91,6 +167,19 @@
             </div>
 
             <div class="detail-page-price">{{ service.price }} ₽</div>
+
+            <!-- Кнопки действий -->
+            <div class="action-buttons">
+              {% if user.is_authenticated %}
+              <form method="post" action="{% url 'add_to_request' service_id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'service_detail' service_id %}">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-cart-plus"></i> Добавить в заявку
+                </button>
+              </form>
+              {% endif %}
+            </div>
 
             <div class="info-box">
               <div class="info-box-header">Описание</div>
