@@ -220,7 +220,8 @@ header .container {
 }
 
 /* Делаем ссылку "Подробнее" не жирной */
-.property-card a, .hero-back-link {
+.property-card a,
+.hero-back-link {
   font-weight: normal;
   text-decoration: none;
   color: #007bff;
