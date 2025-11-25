@@ -273,6 +273,8 @@ def build_request_detail(request, order_id):
             'id': construction_request.id,
             'user_name': construction_request.creator.username,
             'email': construction_request.creator.email,
+            'phone': construction_request.creator.profile.phone if hasattr(construction_request.creator, 'profile') else '',
+            'payment_method': 'Банковская карта',  # Добавляем способ оплаты
             'operation_type': construction_request.construction_type,
             'status': construction_request.status,
             'created_date': construction_request.created_at.strftime('%d.%m.%Y'),
@@ -298,12 +300,22 @@ def build_request_detail(request, order_id):
             'total_price': construction_request.estimated_cost
         }
         
+        # Добавляем поле service для совместимости с шаблоном из l1
+        if request_items:
+            first_item = request_items[0]
+            build_request['service'] = {
+                'title': first_item.building_object.name,
+                'image_url': first_item.building_object.image_url or '/static/images/building1.jpg'
+            }
+        
     except ConstructionRequest.DoesNotExist:
         # Если заявка не найдена, создаем заглушку
         build_request = {
             'id': order_id,
             'user_name': 'Пользователь',
             'email': 'user@example.com',
+            'phone': '+7 (999) 123-45-67',  # Добавляем телефон
+            'payment_method': 'Банковская карта',  # Добавляем способ оплаты
             'operation_type': 'Реконструкция',
             'status': 'completed',
             'created_date': date.today().strftime('%d.%m.%Y'),
@@ -326,7 +338,12 @@ def build_request_detail(request, order_id):
                     'order_number': 1
                 }
             ],
-            'total_price': '0'
+            'total_price': '0',
+            # Добавляем поле service для совместимости с шаблоном из l1
+            'service': {
+                'title': 'Строительный объект',
+                'image_url': '/static/images/building1.jpg'
+            }
         }
 
     context = {
