@@ -22,15 +22,14 @@ var/
 
 # Django
 *.log
-local_settings.py
+*.pot
+*.pyc
 db.sqlite3
-db.sqlite3-journal
-media
+media/
 
-# Virtual Environment
+# Виртуальное окружение
 venv/
 ENV/
-env/
 
 # IDE
 .idea/
@@ -38,10 +37,5 @@ env/
 *.swp
 *.swo
 
-# Mac OS
+# Другие
 .DS_Store
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
