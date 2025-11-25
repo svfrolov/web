@@ -88,29 +88,6 @@
       </div>
     </header>
 
-    <!-- Подхедер с корзиной -->
-    <div class="subheader">
-      <div class="container">
-        <div class="cart-container">
-          {% if user.is_authenticated and current_request %}
-          <a href="{% url 'view_request' %}">
-            <div class="cart">
-              🛒
-              <span class="cart-badge"
-                >{{ current_request.construction_items.count }}</span
-              >
-            </div>
-          </a>
-          {% else %}
-          <div class="cart disabled">
-            🛒
-            <span class="cart-badge">0</span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
     <!-- Сообщения -->
     {% if messages %}
     <div class="container">
