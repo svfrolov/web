@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои строительные заявки - Строй контроль</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+</head>
+<body>
+    <header>
+      <div class="container">
+        <div class="home-link">
+          <a href="{% url 'index' %}">🏠 Домой</a>
+        </div>
+        <div class="logo">Строй контроль</div>
+        <div class="header-right"></div>
+      </div>
+    </header>
+
+    <!-- Подхедер с корзиной -->
+    <div class="subheader">
+      <div class="container">
+        <div class="cart-container">
+          <a href="{% url 'build_request_detail' order_id=1 %}">
+            <div class="cart">
+              🛒
+              <span class="cart-badge">1</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <section>
+        <div class="container">
+            <h1>Моя строительная заявка</h1>
+        </div>
+    </section>
+    
+    <main>
+        <div class="container">
+            <div class="orders-container">
+                <div id="order-items-container" class="order-items">
+                    <!-- Сюда будут загружаться элементы строительной заявки через JavaScript -->
+                </div>
+                
+                <div class="order-summary">
+                    <span>Всего объектов:</span>
+                    <span id="total-count" class="total-count">0</span>
+                </div>
+                
+                <div class="order-actions">
+                    <button onclick="saveOrder()" class="primary-button">Сохранить строительную заявку</button>
+                    <a href="{% url 'index' %}" class="secondary-link">Вернуться к объектам</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2025 Строй контроль. Все права защищены.</p>
+    </footer>
+
+<script>
+// Загрузка данных строительной заявки из sessionStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
+    displayOrderItems(orderData);
+});
+
+function displayOrderItems(orderData) {
+    const container = document.getElementById('order-items-container');
+    const totalCount = document.getElementById('total-count');
+    
+    if (orderData.length === 0) {
+        container.innerHTML = '<div class="empty-order">Строительная заявка пуста</div>';
+        totalCount.textContent = '0';
+        return;
+    }
+    
+    let html = '';
+    orderData.forEach((item, index) => {
+        html += `
+            <div class="order-item">
+                <div class="order-item-header">
+                    <strong>${item.serviceTitle}</strong>
+                    <span>${item.date}</span>
+                </div>
+                <div class="order-item-label">Результат:</div>
+                <div class="order-item-result">${item.result}</div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    totalCount.textContent = orderData.length;
+}
+
+function saveOrder() {
+    const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
+    if (orderData.length === 0) {
+        alert('Строительная заявка пуста!');
+        return;
+    }
+    
+    // Здесь будет логика сохранения строительной заявки (для 3-й лабораторной)
+    alert(`Строительная заявка сохранена! Количество объектов: ${orderData.length}`);
+    sessionStorage.removeItem('orderData');
+    window.location.href = "{% url 'index' %}";
+}
+</script>
+</body>
+</html>
