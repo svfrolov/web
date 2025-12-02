@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionItem
@@ -19,9 +19,37 @@ from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 import django_filters
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from .permissions import IsModeratorUser, IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 # Оставляем существующую функцию для совместимости
 @csrf_exempt
+@swagger_auto_schema(
+    method='post',
+    operation_description="Загрузка изображения товара",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'image': openapi.Schema(type=openapi.TYPE_FILE),
+        }
+    ),
+    responses={
+        200: openapi.Response('Успешная загрузка', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                'image_url': openapi.Schema(type=openapi.TYPE_STRING),
+                'object_name': openapi.Schema(type=openapi.TYPE_STRING),
+                'product_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            }
+        )),
+        400: 'Неверный запрос',
+        500: 'Ошибка сервера'
+    }
+)
+@api_view(['POST'])
 def upload_product_image(request, product_id=None):
     """
     API-эндпоинт для загрузки изображений товаров через Postman
@@ -83,12 +111,36 @@ class BuildingObjectViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description', 'location']
     ordering_fields = ['name', 'area', 'floor_count']
     
+    def get_permissions(self):
+        """
+        Возвращает соответствующие разрешения в зависимости от действия.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
     def perform_destroy(self, instance):
         """Мягкое удаление - помечаем запись как удаленную"""
         instance.is_deleted = True
         instance.save()
     
-    @action(detail=True, methods=['post'], url_path='upload-image')
+    @swagger_auto_schema(
+        operation_description="Загрузка изображения для услуги",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'image': openapi.Schema(type=openapi.TYPE_FILE),
+            }
+        ),
+        responses={
+            200: openapi.Response('Успешная загрузка'),
+            400: 'Неверный запрос',
+            500: 'Ошибка сервера'
+        }
+    )
+    @action(detail=True, methods=['post'], url_path='upload-image', permission_classes=[IsAuthenticated])
     def upload_image(self, request, pk=None):
         """Метод для загрузки изображения услуги"""
         try:
@@ -145,9 +197,37 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
     filterset_class = TechnicalSupervisionFilter
     ordering_fields = ['created_at', 'formed_at', 'completed_at']
     
+    def get_permissions(self):
+        """
+        Возвращает соответствующие разрешения в зависимости от действия.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsAuthenticated]
+        elif self.action in ['create', 'update', 'partial_update', 'submit_request']:
+            permission_classes = [IsAuthenticated]
+        elif self.action in ['destroy', 'complete_request', 'reject_request']:
+            permission_classes = [IsModeratorUser]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        """
+        Возвращает заявки в зависимости от роли пользователя:
+        - Модератор видит все заявки
+        - Обычный пользователь видит только свои заявки
+        """
+        user = self.request.user
+        if user.is_authenticated:
+            if user.is_staff:  # Модератор
+                return TechnicalSupervision.objects.exclude(status='deleted').exclude(status='draft')
+            else:  # Обычный пользователь
+                return TechnicalSupervision.objects.filter(creator=user).exclude(status='deleted').exclude(status='draft')
+        return TechnicalSupervision.objects.none()
+    
     def perform_create(self, serializer):
         """При создании заявки автоматически устанавливаем создателя"""
-        serializer.save(creator=get_current_user(), status='draft')
+        serializer.save(creator=self.request.user, status='draft')
     
     def perform_destroy(self, instance):
         """Мягкое удаление - изменяем статус на 'deleted'"""
@@ -157,6 +237,14 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
         else:
             return Response({'error': 'Только черновики можно удалять'}, status=status.HTTP_400_BAD_REQUEST)
     
+    @swagger_auto_schema(
+        operation_description="Формирование заявки",
+        responses={
+            200: TechnicalSupervisionSerializer,
+            400: 'Неверный запрос',
+            403: 'Доступ запрещен'
+        }
+    )
     @action(detail=True, methods=['put'], url_path='submit')
     def submit_request(self, request, pk=None):
         """Метод для формирования заявки"""
@@ -167,7 +255,7 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Только черновик можно сформировать'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Проверяем, что заявка принадлежит текущему пользователю
-        if technical_supervision.creator != get_current_user():
+        if technical_supervision.creator != request.user:
             return Response({'error': 'Вы не можете формировать чужие заявки'}, status=status.HTTP_403_FORBIDDEN)
         
         # Проверяем, что в заявке есть услуги
@@ -180,7 +268,15 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(technical_supervision)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['put'], url_path='complete')
+    @swagger_auto_schema(
+        operation_description="Завершение заявки (только для модераторов)",
+        responses={
+            200: TechnicalSupervisionSerializer,
+            400: 'Неверный запрос',
+            403: 'Доступ запрещен'
+        }
+    )
+    @action(detail=True, methods=['put'], url_path='complete', permission_classes=[IsModeratorUser])
     def complete_request(self, request, pk=None):
         """Метод для завершения заявки"""
         technical_supervision = self.get_object()
@@ -190,12 +286,20 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Только сформированную заявку можно завершить'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Завершаем заявку
-        technical_supervision.complete(get_moderator_user())
+        technical_supervision.complete(request.user)
         
         serializer = self.get_serializer(technical_supervision)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['put'], url_path='reject')
+    @swagger_auto_schema(
+        operation_description="Отклонение заявки (только для модераторов)",
+        responses={
+            200: TechnicalSupervisionSerializer,
+            400: 'Неверный запрос',
+            403: 'Доступ запрещен'
+        }
+    )
+    @action(detail=True, methods=['put'], url_path='reject', permission_classes=[IsModeratorUser])
     def reject_request(self, request, pk=None):
         """Метод для отклонения заявки"""
         technical_supervision = self.get_object()
@@ -206,18 +310,31 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
         
         # Отклоняем заявку
         technical_supervision.status = 'rejected'
-        technical_supervision.moderator = get_moderator_user()
+        technical_supervision.moderator = request.user
         technical_supervision.completed_at = timezone.now()
         technical_supervision.save()
         
         serializer = self.get_serializer(technical_supervision)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        operation_description="Получение иконки корзины",
+        responses={
+            200: CartIconSerializer,
+        }
+    )
     @action(detail=False, methods=['get'], url_path='cart-icon')
     def cart_icon(self, request):
         """Метод для получения иконки корзины"""
         # Получаем текущего пользователя
-        current_user = get_current_user()
+        current_user = request.user
+        
+        # Если пользователь не аутентифицирован, возвращаем пустую корзину
+        if not current_user.is_authenticated:
+            return Response({
+                'request_id': None,
+                'items_count': 0
+            })
         
         # Ищем заявку-черновик для текущего пользователя
         try:
@@ -243,11 +360,30 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
 # API для элементов заявок (TechnicalSupervisionItem)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Добавление услуги в заявку",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['building_object_id'],
+        properties={
+            'building_object_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'quantity': openapi.Schema(type=openapi.TYPE_INTEGER, default=1),
+            'order_number': openapi.Schema(type=openapi.TYPE_INTEGER, default=1),
+        }
+    ),
+    responses={
+        201: TechnicalSupervisionItemSerializer,
+        400: 'Неверный запрос',
+        404: 'Услуга не найдена'
+    }
+)
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_service_to_request(request):
     """Метод для добавления услуги в заявку"""
     # Получаем текущего пользователя
-    current_user = get_current_user()
+    current_user = request.user
     
     # Получаем данные из запроса
     building_object_id = request.data.get('building_object_id')
@@ -290,11 +426,21 @@ def add_service_to_request(request):
     serializer = TechnicalSupervisionItemSerializer(request_item)
     return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Удаление услуги из заявки",
+    responses={
+        204: 'Успешное удаление',
+        400: 'Неверный запрос',
+        404: 'Заявка или услуга не найдена'
+    }
+)
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def remove_service_from_request(request, request_id, service_id):
     """Метод для удаления услуги из заявки"""
     # Получаем текущего пользователя
-    current_user = get_current_user()
+    current_user = request.user
     
     # Проверяем существование заявки
     try:
@@ -317,11 +463,28 @@ def remove_service_from_request(request, request_id, service_id):
     except TechnicalSupervisionItem.DoesNotExist:
         return Response({'error': 'Услуга не найдена в заявке'}, status=status.HTTP_404_NOT_FOUND)
 
+@swagger_auto_schema(
+    method='put',
+    operation_description="Изменение количества/порядка услуги в заявке",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'quantity': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'order_number': openapi.Schema(type=openapi.TYPE_INTEGER),
+        }
+    ),
+    responses={
+        200: TechnicalSupervisionItemSerializer,
+        400: 'Неверный запрос',
+        404: 'Заявка или услуга не найдена'
+    }
+)
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def update_request_item(request, request_id, service_id):
     """Метод для изменения количества/порядка услуги в заявке"""
     # Получаем текущего пользователя
-    current_user = get_current_user()
+    current_user = request.user
     
     # Проверяем существование заявки
     try:
@@ -359,7 +522,16 @@ def update_request_item(request, request_id, service_id):
 # API для пользователей
 class UserRegistrationView(APIView):
     """API для регистрации пользователей"""
+    permission_classes = [AllowAny]
     
+    @swagger_auto_schema(
+        operation_description="Регистрация нового пользователя",
+        request_body=UserRegistrationSerializer,
+        responses={
+            201: UserRegistrationSerializer,
+            400: 'Неверный запрос'
+        }
+    )
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -367,24 +539,67 @@ class UserRegistrationView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Получение данных текущего пользователя",
+    responses={
+        200: UserSerializer,
+        401: 'Пользователь не аутентифицирован'
+    }
+)
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_user_profile(request):
     """Метод для получения данных текущего пользователя"""
-    user = get_current_user()
+    user = request.user
     serializer = UserSerializer(user)
     return Response(serializer.data)
 
+@swagger_auto_schema(
+    method='put',
+    operation_description="Изменение данных текущего пользователя",
+    request_body=UserSerializer,
+    responses={
+        200: UserSerializer,
+        400: 'Неверный запрос',
+        401: 'Пользователь не аутентифицирован'
+    }
+)
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def update_user_profile(request):
     """Метод для изменения данных текущего пользователя"""
-    user = get_current_user()
+    user = request.user
     serializer = UserSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Аутентификация пользователя",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['username', 'password'],
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
+        }
+    ),
+    responses={
+        200: openapi.Response('Успешная аутентификация', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        401: 'Неверные учетные данные'
+    }
+)
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def user_login(request):
     """Метод для аутентификации пользователя"""
     username = request.data.get('username')
@@ -396,7 +611,21 @@ def user_login(request):
         return Response({'success': True, 'message': 'Успешная аутентификация'})
     return Response({'success': False, 'message': 'Неверные учетные данные'}, status=status.HTTP_401_UNAUTHORIZED)
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Деавторизация пользователя",
+    responses={
+        200: openapi.Response('Успешная деавторизация', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ))
+    }
+)
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def user_logout(request):
     """Метод для деавторизации пользователя"""
     logout(request)
