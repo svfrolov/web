@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ваша заявка - Строй контроль</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      .messages {
+        margin-bottom: 20px;
+      }
+
+      .messages .message {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+
+      .messages .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .messages .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      
+      .action-links {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .action-links a, .action-links button {
+        margin: 0 10px;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="home-link">
+          <a href="{% url 'index' %}">🏠 Домой</a>
+        </div>
+        <div class="logo">Строй контроль</div>
+        <div class="header-right">
+          {% if user.is_authenticated %}
+          <span>{{ user.username }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="container">
+      <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <section>
+      <div class="container">
+        <p>
+          <a href="{% url 'index' %}" class="hero-back-link">Назад к объектам</a>
+        </p>
+      </div>
+    </section>
+
+    <div class="container mt-4">
+      <div class="row">
+        <div class="col-12">
+          <h1 class="mb-4">Ваша текущая заявка на технический надзор</h1>
+            
+          {% if request_items %}
+            <div class="card shadow mb-4">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Заявка #{{ technical_supervision.id }}</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Изображение</th>
+                        <th>Объект</th>
+                        <th>Местоположение</th>
+                        <th>Площадь</th>
+                        <th>Количество</th>
+                        <th>Порядковый номер</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for item in request_items %}
+                      <tr>
+                        <td style="width: 80px;">
+                          <img src="{{ item.building_object.image_url|default:'/static/images/building1.jpg' }}" 
+                               alt="{{ item.building_object.name }}" 
+                               style="width: 70px; height: 50px; object-fit: cover;">
+                        </td>
+                        <td>
+                          <a href="{% url 'service_detail' item.building_object.id %}">
+                            {{ item.building_object.name }}
+                          </a>
+                        </td>
+                        <td>{{ item.building_object.location }}</td>
+                        <td>{{ item.building_object.area }} м²</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.order_number }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+                
+            <div class="action-links">
+              <!-- Ссылка для просмотра деталей заявки -->
+              <a href="{% url 'build_request_detail' technical_supervision.id %}" class="hero-back-link">
+                Просмотреть детали заявки
+              </a>
+              
+              <!-- Форма для удаления заявки с кнопкой в виде ссылки -->
+              <form method="post" action="{% url 'delete_request' technical_supervision.id %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="hero-back-link" style="background: none; border: none; cursor: pointer; color: #007bff; text-decoration: underline;">
+                  Удалить заявку
+                </button>
+              </form>
+            </div>
+          {% else %}
+            <div class="alert alert-info">
+              <p>В вашей заявке нет строительных объектов.</p>
+              <a href="{% url 'index' %}" class="hero-back-link">Перейти к выбору объектов</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2025 Строй контроль. Все права защищены.</p>
+    </footer>
+  </body>
+</html>
