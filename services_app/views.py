@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.db import connection
 from datetime import date
-from .models import BuildingObject, ConstructionRequest, ConstructionRequestItem
+from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionItem
 
 def index(request):
     """Главная страница со строительными объектами"""
@@ -69,7 +69,7 @@ def index(request):
     # Получаем текущую заявку пользователя (если она есть)
     current_request = None
     if request.user.is_authenticated:
-        current_request = ConstructionRequest.objects.filter(
+        current_request = TechnicalSupervision.objects.filter(
             creator=request.user, 
             status='draft'
         ).first()
@@ -134,7 +134,7 @@ def service_detail(request, id):
     # Получаем текущую заявку пользователя (если она есть)
     current_request = None
     if request.user.is_authenticated:
-        current_request = ConstructionRequest.objects.filter(
+        current_request = TechnicalSupervision.objects.filter(
             creator=request.user, 
             status='draft'
         ).first()
@@ -190,19 +190,19 @@ def add_to_request(request, building_object_id):
                 return redirect('index')
         
         # Получаем или создаем заявку в статусе черновик
-        construction_request, created = ConstructionRequest.objects.get_or_create(
+        technical_supervision, created = TechnicalSupervision.objects.get_or_create(
             creator=request.user,
             status='draft',
             defaults={'created_at': timezone.now()}
         )
         
         # Пытаемся получить существующий элемент заявки
-        request_item, created = ConstructionRequestItem.objects.get_or_create(
-            construction_request=construction_request,
+        request_item, created = TechnicalSupervisionItem.objects.get_or_create(
+            technical_supervision=technical_supervision,
             building_object=building_object,
             defaults={
                 'quantity': 1,
-                'order_number': ConstructionRequestItem.objects.filter(construction_request=construction_request).count() + 1
+                'order_number': TechnicalSupervisionItem.objects.filter(technical_supervision=technical_supervision).count() + 1
             }
         )
         
@@ -223,13 +223,13 @@ def add_to_request(request, building_object_id):
 def view_request(request):
     """Просмотр текущей заявки (корзины) через ORM"""
     # Получаем заявку в статусе черновик для текущего пользователя
-    construction_request = get_object_or_404(ConstructionRequest, creator=request.user, status='draft')
+    technical_supervision = get_object_or_404(TechnicalSupervision, creator=request.user, status='draft')
     
     # Получаем все элементы заявки
-    request_items = construction_request.construction_items.all().select_related('building_object')
+    request_items = technical_supervision.supervision_items.all().select_related('building_object')
     
     context = {
-        'construction_request': construction_request,
+        'technical_supervision': technical_supervision,
         'request_items': request_items,
         'current_date': date.today()
     }
@@ -240,12 +240,12 @@ def delete_request(request, request_id):
     """Логическое удаление заявки через SQL запрос (не ORM)"""
     if request.method == 'POST':
         # Проверяем, что заявка принадлежит текущему пользователю
-        construction_request = get_object_or_404(ConstructionRequest, id=request_id, creator=request.user)
+        technical_supervision = get_object_or_404(TechnicalSupervision, id=request_id, creator=request.user)
         
         # Используем SQL запрос для обновления статуса заявки
         with connection.cursor() as cursor:
             cursor.execute(
-                "UPDATE services_app_constructionrequest SET status = 'deleted' WHERE id = %s AND creator_id = %s",
+                "UPDATE services_app_technicalsupervision SET status = 'deleted' WHERE id = %s AND creator_id = %s",
                 [request_id, request.user.id]
             )
         
@@ -255,30 +255,30 @@ def delete_request(request, request_id):
     return redirect('index')
 
 def build_request_detail(request, order_id):
-    """Страница детального просмотра строительной заявки"""
+    """Страница детального просмотра заявки на технический надзор"""
     # Пытаемся найти заявку в базе данных
     try:
-        construction_request = ConstructionRequest.objects.get(id=order_id)
+        technical_supervision = TechnicalSupervision.objects.get(id=order_id)
         
         # Если заявка удалена, не показываем ее
-        if construction_request.status == 'deleted':
+        if technical_supervision.status == 'deleted':
             messages.error(request, 'Заявка была удалена')
             return redirect('index')
         
         # Получаем все элементы заявки
-        request_items = construction_request.construction_items.all().select_related('building_object')
+        request_items = technical_supervision.supervision_items.all().select_related('building_object')
         
         # Формируем данные для шаблона
         build_request = {
-            'id': construction_request.id,
-            'user_name': construction_request.creator.username,
-            'email': construction_request.creator.email,
-            'phone': construction_request.creator.profile.phone if hasattr(construction_request.creator, 'profile') else '',
+            'id': technical_supervision.id,
+            'user_name': technical_supervision.creator.username,
+            'email': technical_supervision.creator.email,
+            'phone': technical_supervision.creator.profile.phone if hasattr(technical_supervision.creator, 'profile') else '',
             'payment_method': 'Банковская карта',  # Добавляем способ оплаты
-            'operation_type': construction_request.construction_type,
-            'status': construction_request.status,
-            'created_date': construction_request.created_at.strftime('%d.%m.%Y'),
-            'get_status_display': construction_request.get_status_display(),
+            'operation_type': technical_supervision.construction_type,
+            'status': technical_supervision.status,
+            'created_date': technical_supervision.created_at.strftime('%d.%m.%Y'),
+            'get_status_display': technical_supervision.get_status_display(),
             'items': [
                 {
                     'product': {
@@ -297,7 +297,7 @@ def build_request_detail(request, order_id):
                     'order_number': item.order_number
                 } for item in request_items
             ],
-            'total_price': construction_request.estimated_cost
+            'total_price': technical_supervision.estimated_cost
         }
         
         # Добавляем поле service для совместимости с шаблоном из l1
@@ -308,7 +308,7 @@ def build_request_detail(request, order_id):
                 'image_url': first_item.building_object.image_url or '/static/images/building1.jpg'
             }
         
-    except ConstructionRequest.DoesNotExist:
+    except TechnicalSupervision.DoesNotExist:
         # Если заявка не найдена, создаем заглушку
         build_request = {
             'id': order_id,
@@ -316,7 +316,7 @@ def build_request_detail(request, order_id):
             'email': 'user@example.com',
             'phone': '+7 (999) 123-45-67',  # Добавляем телефон
             'payment_method': 'Банковская карта',  # Добавляем способ оплаты
-            'operation_type': 'Реконструкция',
+            'operation_type': 'Технический надзор',
             'status': 'completed',
             'created_date': date.today().strftime('%d.%m.%Y'),
             'get_status_display': 'Завершено',

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import BuildingObject, ConstructionRequest, ConstructionRequestItem
+from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionItem
 
 class BuildingObjectSerializer(serializers.ModelSerializer):
     """Сериализатор для модели BuildingObject (строительные услуги)"""
@@ -15,8 +15,8 @@ class BuildingObjectSerializer(serializers.ModelSerializer):
             return None
         return super().to_representation(instance)
 
-class ConstructionRequestItemSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели ConstructionRequestItem (элементы заявки)"""
+class TechnicalSupervisionItemSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели TechnicalSupervisionItem (элементы заявки)"""
     building_object = BuildingObjectSerializer(read_only=True)
     building_object_id = serializers.PrimaryKeyRelatedField(
         queryset=BuildingObject.objects.filter(is_deleted=False),
@@ -25,7 +25,7 @@ class ConstructionRequestItemSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = ConstructionRequestItem
+        model = TechnicalSupervisionItem
         fields = ['id', 'building_object', 'building_object_id', 'quantity', 'order_number']
         read_only_fields = ['id']  # Защита системных полей
 
@@ -36,20 +36,20 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
         read_only_fields = ['id']  # Защита системных полей
 
-class ConstructionRequestSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели ConstructionRequest (заявки на строительство)"""
+class TechnicalSupervisionSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели TechnicalSupervision (заявки на технический надзор)"""
     creator = UserSerializer(read_only=True)
     moderator = UserSerializer(read_only=True)
-    construction_items = ConstructionRequestItemSerializer(many=True, read_only=True)
+    supervision_items = TechnicalSupervisionItemSerializer(many=True, read_only=True)
     # Вычисляемое поле для подсчета записей м-м с непустым результатом
     items_with_result_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = ConstructionRequest
+        model = TechnicalSupervision
         fields = [
             'id', 'status', 'created_at', 'formed_at', 'completed_at',
             'creator', 'moderator', 'construction_type', 'estimated_cost',
-            'construction_items', 'items_with_result_count'
+            'supervision_items', 'items_with_result_count'
         ]
         read_only_fields = [
             'id', 'status', 'created_at', 'formed_at', 'completed_at',
@@ -61,7 +61,7 @@ class ConstructionRequestSerializer(serializers.ModelSerializer):
         Вычисляемое поле: количество записей м-м, в которых рассчитываемое поле результата не пустое
         В данном случае, считаем элементы с quantity > 0
         """
-        return obj.construction_items.filter(quantity__gt=0).count()
+        return obj.supervision_items.filter(quantity__gt=0).count()
     
     def to_representation(self, instance):
         """Исключаем удаленные записи из выдачи"""

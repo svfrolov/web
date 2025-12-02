@@ -20,8 +20,8 @@ class BuildingObject(models.Model):
         verbose_name = "Строительный объект"
         verbose_name_plural = "Строительные объекты"
 
-class ConstructionRequest(models.Model):
-    """Модель для хранения заявок на строительство"""
+class TechnicalSupervision(models.Model):
+    """Модель для хранения заявок на технический надзор"""
     STATUS_CHOICES = [
         ('draft', 'Черновик'),
         ('deleted', 'Удален'),
@@ -32,13 +32,13 @@ class ConstructionRequest(models.Model):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Статус")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    creator = models.ForeignKey(User, on_delete=models.PROTECT, related_name='construction_requests', verbose_name="Создатель")
+    creator = models.ForeignKey(User, on_delete=models.PROTECT, related_name='technical_supervisions', verbose_name="Создатель")
     formed_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата формирования")
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата завершения")
     moderator = models.ForeignKey(
         User, 
         on_delete=models.PROTECT, 
-        related_name='moderated_requests', 
+        related_name='moderated_supervisions', 
         null=True, 
         blank=True, 
         verbose_name="Модератор"
@@ -48,16 +48,16 @@ class ConstructionRequest(models.Model):
     estimated_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Расчетная стоимость")
     
     def __str__(self):
-        return f"Заявка на строительство #{self.id} ({self.get_status_display()})"
+        return f"Заявка на технический надзор #{self.id} ({self.get_status_display()})"
     
     class Meta:
-        verbose_name = "Заявка на строительство"
-        verbose_name_plural = "Заявки на строительство"
+        verbose_name = "Заявка на технический надзор"
+        verbose_name_plural = "Заявки на технический надзор"
         
     def calculate_estimated_cost(self):
         """Метод для расчета расчетной стоимости заявки"""
         total = 0
-        for item in self.construction_items.all():
+        for item in self.supervision_items.all():
             # Расчет стоимости на основе площади объекта и количества
             base_cost = float(item.building_object.area) * 1000  # Примерная стоимость за кв.м
             total += base_cost * item.quantity
@@ -80,18 +80,18 @@ class ConstructionRequest(models.Model):
             self.estimated_cost = self.calculate_estimated_cost()
             self.save()
 
-class ConstructionRequestItem(models.Model):
+class TechnicalSupervisionItem(models.Model):
     """Модель для связи многие-ко-многим между заявками и строительными объектами"""
-    construction_request = models.ForeignKey(ConstructionRequest, on_delete=models.PROTECT, related_name='construction_items', verbose_name="Заявка")
-    building_object = models.ForeignKey(BuildingObject, on_delete=models.PROTECT, related_name='request_items', verbose_name="Строительный объект")
+    technical_supervision = models.ForeignKey(TechnicalSupervision, on_delete=models.PROTECT, related_name='supervision_items', verbose_name="Заявка")
+    building_object = models.ForeignKey(BuildingObject, on_delete=models.PROTECT, related_name='supervision_items', verbose_name="Строительный объект")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     order_number = models.PositiveIntegerField(default=1, verbose_name="Порядковый номер")
     
     def __str__(self):
-        return f"{self.building_object.name} ({self.quantity} шт.) в заявке #{self.construction_request.id}"
+        return f"{self.building_object.name} ({self.quantity} шт.) в заявке #{self.technical_supervision.id}"
     
     class Meta:
-        verbose_name = "Элемент заявки на строительство"
-        verbose_name_plural = "Элементы заявок на строительство"
+        verbose_name = "Элемент заявки на технический надзор"
+        verbose_name_plural = "Элементы заявок на технический надзор"
         # Составной уникальный ключ
-        unique_together = ('construction_request', 'building_object')
+        unique_together = ('technical_supervision', 'building_object')

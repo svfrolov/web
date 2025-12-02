@@ -80,12 +80,12 @@
     <div class="container mt-4">
       <div class="row">
         <div class="col-12">
-          <h1 class="mb-4">Ваша текущая заявка на строительство</h1>
+          <h1 class="mb-4">Ваша текущая заявка на технический надзор</h1>
             
           {% if request_items %}
             <div class="card shadow mb-4">
               <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Заявка #{{ construction_request.id }}</h5>
+                <h5 class="mb-0">Заявка #{{ technical_supervision.id }}</h5>
               </div>
               <div class="card-body">
                 <div class="table-responsive">
@@ -127,12 +127,12 @@
                 
             <div class="action-links">
               <!-- Ссылка для просмотра деталей заявки -->
-              <a href="{% url 'build_request_detail' construction_request.id %}" class="hero-back-link">
+              <a href="{% url 'build_request_detail' technical_supervision.id %}" class="hero-back-link">
                 Просмотреть детали заявки
               </a>
               
               <!-- Форма для удаления заявки с кнопкой в виде ссылки -->
-              <form method="post" action="{% url 'delete_request' construction_request.id %}" style="display: inline;">
+              <form method="post" action="{% url 'delete_request' technical_supervision.id %}" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="hero-back-link" style="background: none; border: none; cursor: pointer; color: #007bff; text-decoration: underline;">
                   Удалить заявку

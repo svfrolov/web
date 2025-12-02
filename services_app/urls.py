@@ -6,16 +6,16 @@ from . import api_views
 # Создаем роутер для API
 router = DefaultRouter()
 router.register(r'services', api_views.BuildingObjectViewSet, basename='service')
-router.register(r'requests', api_views.ConstructionRequestViewSet, basename='request')
+router.register(r'supervisions', api_views.TechnicalSupervisionViewSet, basename='supervision')
 
 urlpatterns = [
     # Стандартные маршруты для веб-интерфейса
     path('', views.index, name='index'),
     path('service/<int:id>/', views.service_detail, name='service_detail'),
-    path('build_request/<int:order_id>/', views.build_request_detail, name='build_request_detail'),
-    path('add-to-request/<int:building_object_id>/', views.add_to_request, name='add_to_request'),
+    path('technical_supervision/<int:order_id>/', views.build_request_detail, name='build_request_detail'),
+    path('add-to-supervision/<int:building_object_id>/', views.add_to_request, name='add_to_request'),
     path('technical_supervision/', views.view_request, name='view_request'),
-    path('delete-request/<int:request_id>/', views.delete_request, name='delete_request'),
+    path('delete-supervision/<int:request_id>/', views.delete_request, name='delete_request'),
     
     # API маршруты
     path('api/', include(router.urls)),
@@ -25,12 +25,12 @@ urlpatterns = [
     path('api/products/<int:product_id>/upload-image/', api_views.upload_product_image, name='upload_product_image'),
     
     # API для элементов заявок
-    path('api/requests/add-service/', api_views.add_service_to_request, name='add_service_to_request'),
-    path('api/requests/<int:request_id>/services/<int:service_id>/', api_views.remove_service_from_request, name='remove_service_from_request'),
-    path('api/requests/<int:request_id>/services/<int:service_id>/update/', api_views.update_request_item, name='update_request_item'),
+    path('api/supervisions/add-service/', api_views.add_service_to_request, name='add_service_to_request'),
+    path('api/supervisions/<int:request_id>/services/<int:service_id>/', api_views.remove_service_from_request, name='remove_service_from_request'),
+    path('api/supervisions/<int:request_id>/services/<int:service_id>/update/', api_views.update_request_item, name='update_request_item'),
     
     # API для иконки корзины
-    path('api/cart-icon/', api_views.ConstructionRequestViewSet.as_view({'get': 'cart_icon'}), name='cart_icon'),
+    path('api/cart-icon/', api_views.TechnicalSupervisionViewSet.as_view({'get': 'cart_icon'}), name='cart_icon'),
     
     # API для пользователей
     path('api/users/register/', api_views.UserRegistrationView.as_view(), name='user_registration'),

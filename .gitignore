@@ -54,3 +54,7 @@ Thumbs.db
 
 # Screenshots folder
 scr_shot_pokaz_izm/
+
+# Additional files
+project_structure.txt
+error.txt

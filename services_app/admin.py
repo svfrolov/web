@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BuildingObject, ConstructionRequest, ConstructionRequestItem
+from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionItem
 
 @admin.register(BuildingObject)
 class BuildingObjectAdmin(admin.ModelAdmin):
@@ -13,20 +13,20 @@ class BuildingObjectAdmin(admin.ModelAdmin):
     has_image.boolean = True
     has_image.short_description = "Есть изображение"
 
-class ConstructionRequestItemInline(admin.TabularInline):
-    model = ConstructionRequestItem
+class TechnicalSupervisionItemInline(admin.TabularInline):
+    model = TechnicalSupervisionItem
     extra = 0
 
-@admin.register(ConstructionRequest)
-class ConstructionRequestAdmin(admin.ModelAdmin):
+@admin.register(TechnicalSupervision)
+class TechnicalSupervisionAdmin(admin.ModelAdmin):
     list_display = ('id', 'status', 'created_at', 'creator', 'construction_type', 'estimated_cost')
     list_filter = ('status', 'construction_type')
     search_fields = ('creator__username',)
-    inlines = [ConstructionRequestItemInline]
+    inlines = [TechnicalSupervisionItemInline]
     readonly_fields = ('created_at', 'formed_at', 'completed_at')
 
-@admin.register(ConstructionRequestItem)
-class ConstructionRequestItemAdmin(admin.ModelAdmin):
-    list_display = ('construction_request', 'building_object', 'quantity', 'order_number')
+@admin.register(TechnicalSupervisionItem)
+class TechnicalSupervisionItemAdmin(admin.ModelAdmin):
+    list_display = ('technical_supervision', 'building_object', 'quantity', 'order_number')
     list_filter = ('order_number',)
-    search_fields = ('building_object__name', 'construction_request__id')
+    search_fields = ('building_object__name', 'technical_supervision__id')

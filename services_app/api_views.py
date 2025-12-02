@@ -4,10 +4,10 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import BuildingObject, ConstructionRequest, ConstructionRequestItem
+from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionItem
 from .serializers import (
-    BuildingObjectSerializer, ConstructionRequestSerializer, 
-    ConstructionRequestItemSerializer, UserSerializer,
+    BuildingObjectSerializer, TechnicalSupervisionSerializer, 
+    TechnicalSupervisionItemSerializer, UserSerializer,
     UserRegistrationSerializer, CartIconSerializer
 )
 from .utils import get_current_user, get_moderator_user
@@ -127,22 +127,22 @@ class BuildingObjectViewSet(viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Фильтр для заявок
-class ConstructionRequestFilter(django_filters.FilterSet):
+class TechnicalSupervisionFilter(django_filters.FilterSet):
     """Фильтр для заявок по дате формирования и статусу"""
     formed_at_from = django_filters.DateTimeFilter(field_name='formed_at', lookup_expr='gte')
     formed_at_to = django_filters.DateTimeFilter(field_name='formed_at', lookup_expr='lte')
     
     class Meta:
-        model = ConstructionRequest
+        model = TechnicalSupervision
         fields = ['status', 'formed_at_from', 'formed_at_to']
 
-# API для заявок (ConstructionRequest)
-class ConstructionRequestViewSet(viewsets.ModelViewSet):
-    """ViewSet для работы с заявками (ConstructionRequest)"""
-    queryset = ConstructionRequest.objects.exclude(status='deleted').exclude(status='draft')
-    serializer_class = ConstructionRequestSerializer
+# API для заявок (TechnicalSupervision)
+class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
+    """ViewSet для работы с заявками (TechnicalSupervision)"""
+    queryset = TechnicalSupervision.objects.exclude(status='deleted').exclude(status='draft')
+    serializer_class = TechnicalSupervisionSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_class = ConstructionRequestFilter
+    filterset_class = TechnicalSupervisionFilter
     ordering_fields = ['created_at', 'formed_at', 'completed_at']
     
     def perform_create(self, serializer):
@@ -160,57 +160,57 @@ class ConstructionRequestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['put'], url_path='submit')
     def submit_request(self, request, pk=None):
         """Метод для формирования заявки"""
-        construction_request = self.get_object()
+        technical_supervision = self.get_object()
         
         # Проверяем, что заявка в статусе черновик
-        if construction_request.status != 'draft':
+        if technical_supervision.status != 'draft':
             return Response({'error': 'Только черновик можно сформировать'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Проверяем, что заявка принадлежит текущему пользователю
-        if construction_request.creator != get_current_user():
+        if technical_supervision.creator != get_current_user():
             return Response({'error': 'Вы не можете формировать чужие заявки'}, status=status.HTTP_403_FORBIDDEN)
         
         # Проверяем, что в заявке есть услуги
-        if construction_request.construction_items.count() == 0:
+        if technical_supervision.supervision_items.count() == 0:
             return Response({'error': 'Нельзя сформировать пустую заявку'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Формируем заявку
-        construction_request.submit()
+        technical_supervision.submit()
         
-        serializer = self.get_serializer(construction_request)
+        serializer = self.get_serializer(technical_supervision)
         return Response(serializer.data)
     
     @action(detail=True, methods=['put'], url_path='complete')
     def complete_request(self, request, pk=None):
         """Метод для завершения заявки"""
-        construction_request = self.get_object()
+        technical_supervision = self.get_object()
         
         # Проверяем, что заявка в статусе сформирована
-        if construction_request.status != 'submitted':
+        if technical_supervision.status != 'submitted':
             return Response({'error': 'Только сформированную заявку можно завершить'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Завершаем заявку
-        construction_request.complete(get_moderator_user())
+        technical_supervision.complete(get_moderator_user())
         
-        serializer = self.get_serializer(construction_request)
+        serializer = self.get_serializer(technical_supervision)
         return Response(serializer.data)
     
     @action(detail=True, methods=['put'], url_path='reject')
     def reject_request(self, request, pk=None):
         """Метод для отклонения заявки"""
-        construction_request = self.get_object()
+        technical_supervision = self.get_object()
         
         # Проверяем, что заявка в статусе сформирована
-        if construction_request.status != 'submitted':
+        if technical_supervision.status != 'submitted':
             return Response({'error': 'Только сформированную заявку можно отклонить'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Отклоняем заявку
-        construction_request.status = 'rejected'
-        construction_request.moderator = get_moderator_user()
-        construction_request.completed_at = timezone.now()
-        construction_request.save()
+        technical_supervision.status = 'rejected'
+        technical_supervision.moderator = get_moderator_user()
+        technical_supervision.completed_at = timezone.now()
+        technical_supervision.save()
         
-        serializer = self.get_serializer(construction_request)
+        serializer = self.get_serializer(technical_supervision)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'], url_path='cart-icon')
@@ -221,17 +221,17 @@ class ConstructionRequestViewSet(viewsets.ModelViewSet):
         
         # Ищем заявку-черновик для текущего пользователя
         try:
-            draft_request = ConstructionRequest.objects.get(creator=current_user, status='draft')
-            items_count = draft_request.construction_items.count()
+            draft_request = TechnicalSupervision.objects.get(creator=current_user, status='draft')
+            items_count = draft_request.supervision_items.count()
             
             serializer = CartIconSerializer({
                 'request_id': draft_request.id,
                 'items_count': items_count
             })
             return Response(serializer.data)
-        except ConstructionRequest.DoesNotExist:
+        except TechnicalSupervision.DoesNotExist:
             # Если черновика нет, создаем новый
-            draft_request = ConstructionRequest.objects.create(
+            draft_request = TechnicalSupervision.objects.create(
                 creator=current_user,
                 status='draft'
             )
@@ -242,7 +242,7 @@ class ConstructionRequestViewSet(viewsets.ModelViewSet):
             })
             return Response(serializer.data)
 
-# API для элементов заявок (ConstructionRequestItem)
+# API для элементов заявок (TechnicalSupervisionItem)
 @api_view(['POST'])
 def add_service_to_request(request):
     """Метод для добавления услуги в заявку"""
@@ -264,7 +264,7 @@ def add_service_to_request(request):
         return Response({'error': 'Услуга не найдена'}, status=status.HTTP_404_NOT_FOUND)
     
     # Ищем или создаем заявку-черновик для текущего пользователя
-    draft_request, created = ConstructionRequest.objects.get_or_create(
+    draft_request, created = TechnicalSupervision.objects.get_or_create(
         creator=current_user,
         status='draft',
         defaults={
@@ -273,8 +273,8 @@ def add_service_to_request(request):
     )
     
     # Проверяем, не добавлена ли уже эта услуга в заявку
-    request_item, created = ConstructionRequestItem.objects.get_or_create(
-        construction_request=draft_request,
+    request_item, created = TechnicalSupervisionItem.objects.get_or_create(
+        technical_supervision=draft_request,
         building_object=building_object,
         defaults={
             'quantity': quantity,
@@ -287,7 +287,7 @@ def add_service_to_request(request):
         request_item.quantity += quantity
         request_item.save()
     
-    serializer = ConstructionRequestItemSerializer(request_item)
+    serializer = TechnicalSupervisionItemSerializer(request_item)
     return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 @api_view(['DELETE'])
@@ -298,23 +298,23 @@ def remove_service_from_request(request, request_id, service_id):
     
     # Проверяем существование заявки
     try:
-        construction_request = ConstructionRequest.objects.get(id=request_id, creator=current_user)
-    except ConstructionRequest.DoesNotExist:
+        technical_supervision = TechnicalSupervision.objects.get(id=request_id, creator=current_user)
+    except TechnicalSupervision.DoesNotExist:
         return Response({'error': 'Заявка не найдена'}, status=status.HTTP_404_NOT_FOUND)
     
     # Проверяем, что заявка в статусе черновик
-    if construction_request.status != 'draft':
+    if technical_supervision.status != 'draft':
         return Response({'error': 'Можно удалять услуги только из черновика'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Удаляем услугу из заявки
     try:
-        request_item = ConstructionRequestItem.objects.get(
-            construction_request=construction_request,
+        request_item = TechnicalSupervisionItem.objects.get(
+            technical_supervision=technical_supervision,
             building_object_id=service_id
         )
         request_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    except ConstructionRequestItem.DoesNotExist:
+    except TechnicalSupervisionItem.DoesNotExist:
         return Response({'error': 'Услуга не найдена в заявке'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['PUT'])
@@ -325,18 +325,18 @@ def update_request_item(request, request_id, service_id):
     
     # Проверяем существование заявки
     try:
-        construction_request = ConstructionRequest.objects.get(id=request_id, creator=current_user)
-    except ConstructionRequest.DoesNotExist:
+        technical_supervision = TechnicalSupervision.objects.get(id=request_id, creator=current_user)
+    except TechnicalSupervision.DoesNotExist:
         return Response({'error': 'Заявка не найдена'}, status=status.HTTP_404_NOT_FOUND)
     
     # Проверяем, что заявка в статусе черновик
-    if construction_request.status != 'draft':
+    if technical_supervision.status != 'draft':
         return Response({'error': 'Можно изменять услуги только в черновике'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Обновляем услугу в заявке
     try:
-        request_item = ConstructionRequestItem.objects.get(
-            construction_request=construction_request,
+        request_item = TechnicalSupervisionItem.objects.get(
+            technical_supervision=technical_supervision,
             building_object_id=service_id
         )
         
@@ -351,9 +351,9 @@ def update_request_item(request, request_id, service_id):
         
         request_item.save()
         
-        serializer = ConstructionRequestItemSerializer(request_item)
+        serializer = TechnicalSupervisionItemSerializer(request_item)
         return Response(serializer.data)
-    except ConstructionRequestItem.DoesNotExist:
+    except TechnicalSupervisionItem.DoesNotExist:
         return Response({'error': 'Услуга не найдена в заявке'}, status=status.HTTP_404_NOT_FOUND)
 
 # API для пользователей
