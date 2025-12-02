@@ -32,6 +32,17 @@
       </div>
     </div>
 
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="container">
+      <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <section>
         <div class="container">
             <h1>Моя строительная заявка</h1>
@@ -66,7 +77,9 @@
 // Загрузка данных строительной заявки из sessionStorage
 document.addEventListener('DOMContentLoaded', function() {
     const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
-    displayOrderItems(orderData);
+    // Фильтруем удаленные заявки
+    const activeOrderData = orderData.filter(item => item.status !== 'deleted');
+    displayOrderItems(activeOrderData);
 });
 
 function displayOrderItems(orderData) {
@@ -89,6 +102,10 @@ function displayOrderItems(orderData) {
                 </div>
                 <div class="order-item-label">Результат:</div>
                 <div class="order-item-result">${item.result}</div>
+                <div class="order-item-actions">
+                    <a href="{% url 'build_request_detail' order_id=0 %}".replace('0', item.id || 0) class="view-button">Просмотреть</a>
+                    <button onclick="deleteItem(${index})" class="delete-button">Удалить</button>
+                </div>
             </div>
         `;
     });
@@ -97,15 +114,30 @@ function displayOrderItems(orderData) {
     totalCount.textContent = orderData.length;
 }
 
+function deleteItem(index) {
+    if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
+        const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
+        // Помечаем элемент как удаленный, а не удаляем физически
+        orderData[index].status = 'deleted';
+        sessionStorage.setItem('orderData', JSON.stringify(orderData));
+        
+        // Отображаем только активные элементы
+        const activeOrderData = orderData.filter(item => item.status !== 'deleted');
+        displayOrderItems(activeOrderData);
+    }
+}
+
 function saveOrder() {
     const orderData = JSON.parse(sessionStorage.getItem('orderData') || '[]');
-    if (orderData.length === 0) {
+    const activeOrderData = orderData.filter(item => item.status !== 'deleted');
+    
+    if (activeOrderData.length === 0) {
         alert('Строительная заявка пуста!');
         return;
     }
     
     // Здесь будет логика сохранения строительной заявки (для 3-й лабораторной)
-    alert(`Строительная заявка сохранена! Количество объектов: ${orderData.length}`);
+    alert(`Строительная заявка сохранена! Количество объектов: ${activeOrderData.length}`);
     sessionStorage.removeItem('orderData');
     window.location.href = "{% url 'index' %}";
 }

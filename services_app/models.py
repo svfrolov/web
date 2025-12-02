@@ -79,6 +79,12 @@ class TechnicalSupervision(models.Model):
             # Рассчитываем стоимость при завершении
             self.estimated_cost = self.calculate_estimated_cost()
             self.save()
+            
+    def delete_logically(self):
+        """Метод для логического удаления заявки"""
+        self.status = 'deleted'
+        self.save()
+        return True
 
 class TechnicalSupervisionItem(models.Model):
     """Модель для связи многие-ко-многим между заявками и строительными объектами"""

@@ -249,7 +249,7 @@ def delete_request(request, request_id):
                 [request_id, request.user.id]
             )
         
-        messages.success(request, 'Заявка успешно удалена')
+        messages.success(request, f'Заявка #{request_id} успешно удалена')
         return redirect('index')
     
     return redirect('index')
@@ -258,12 +258,11 @@ def build_request_detail(request, order_id):
     """Страница детального просмотра заявки на технический надзор"""
     # Пытаемся найти заявку в базе данных
     try:
+        # Получаем заявку по ID, включая удаленные (чтобы показать информацию о статусе)
         technical_supervision = TechnicalSupervision.objects.get(id=order_id)
         
-        # Если заявка удалена, не показываем ее
-        if technical_supervision.status == 'deleted':
-            messages.error(request, 'Заявка была удалена')
-            return redirect('index')
+        # Проверяем, удалена ли заявка
+        is_deleted = technical_supervision.status == 'deleted'
         
         # Получаем все элементы заявки
         request_items = technical_supervision.supervision_items.all().select_related('building_object')
@@ -279,6 +278,7 @@ def build_request_detail(request, order_id):
             'status': technical_supervision.status,
             'created_date': technical_supervision.created_at.strftime('%d.%m.%Y'),
             'get_status_display': technical_supervision.get_status_display(),
+            'is_deleted': is_deleted,  # Добавляем флаг удаления для шаблона
             'items': [
                 {
                     'product': {
@@ -308,6 +308,10 @@ def build_request_detail(request, order_id):
                 'image_url': first_item.building_object.image_url or '/static/images/building1.jpg'
             }
         
+        # Если заявка удалена, добавляем сообщение
+        if is_deleted:
+            messages.warning(request, f'Заявка #{order_id} была удалена и отображается только для просмотра.')
+        
     except TechnicalSupervision.DoesNotExist:
         # Если заявка не найдена, создаем заглушку
         build_request = {
@@ -317,9 +321,10 @@ def build_request_detail(request, order_id):
             'phone': '+7 (999) 123-45-67',  # Добавляем телефон
             'payment_method': 'Банковская карта',  # Добавляем способ оплаты
             'operation_type': 'Технический надзор',
-            'status': 'completed',
+            'status': 'not_found',  # Особый статус для ненайденных заявок
             'created_date': date.today().strftime('%d.%m.%Y'),
-            'get_status_display': 'Завершено',
+            'get_status_display': 'Не найдена',
+            'is_deleted': False,
             'items': [
                 {
                     'product': {
@@ -345,6 +350,9 @@ def build_request_detail(request, order_id):
                 'image_url': '/static/images/building1.jpg'
             }
         }
+        
+        # Добавляем сообщение об ошибке
+        messages.error(request, f'Заявка с ID {order_id} не найдена')
 
     context = {
         'build_request': build_request,
