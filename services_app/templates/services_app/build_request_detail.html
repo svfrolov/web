@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Технический надзор - Строй контроль</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+      .product-thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+      
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-left: 10px;
+      }
+      
+      .status-deleted {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      
+      .status-draft {
+        background-color: #e2e3e5;
+        color: #383d41;
+      }
+      
+      .status-submitted {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      
+      .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      
+      .status-rejected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      
+      .status-not-found {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      
+      .deleted-notice {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 10px 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+        border-left: 5px solid #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="home-link">
+          <a href="{% url 'index' %}">🏠 Домой</a>
+        </div>
+        <div class="logo">Строй контроль</div>
+        <div class="header-right"></div>
+      </div>
+    </header>
+
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="container">
+      <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <section>
+      <div class="container">
+        <p>
+          <a href="{% url 'index' %}" class="hero-back-link"
+            >Назад к корпусам</a
+          >
+        </p>
+      </div>
+    </section>
+
+    <main>
+      <div class="container">
+        <!-- Заголовок с ID заявки и статусом -->
+        <h1 class="section-title">
+          Заявка на технический надзор #{{ build_request.id }}
+          <span class="status-badge status-{{ build_request.status }}">
+            {{ build_request.get_status_display }}
+          </span>
+        </h1>
+        
+        {% if build_request.is_deleted %}
+        <div class="deleted-notice">
+          <strong>Внимание!</strong> Эта заявка была удалена. Информация представлена только для просмотра.
+        </div>
+        {% endif %}
+        
+        <!-- Информация о клиенте -->
+        <div class="customer-info">
+          <h2 class="section-title">Информация о заказчике</h2>
+          <form class="customer-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>ФИО заказчика*</label>
+                <input
+                  type="text"
+                  value="{{ build_request.user_name }}"
+                  placeholder="Иванов Иван Иванович"
+                  readonly
+                />
+              </div>
+              <div class="form-group">
+                <label>Телефон*</label>
+                <input
+                  type="tel"
+                  value="{{ build_request.phone }}"
+                  placeholder="+7 (999) 123-45-67"
+                  readonly
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value="{{ build_request.email }}"
+                  placeholder="example@mail.ru"
+                  readonly
+                />
+              </div>
+              <div class="form-group">
+                <label>Способ оплаты*</label>
+                <input
+                  type="text"
+                  value="{{ build_request.payment_method }}"
+                  placeholder="наличные"
+                  readonly
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Таблица корпусов -->
+        <div class="order-table-container">
+          <h2 class="section-title">
+            Корпусы МГТУ в заявке на технический надзор #{{ build_request.id }}
+          </h2>
+          <table class="order-table">
+            <thead>
+              <tr>
+                <th>Img</th>
+                <th>Корпус</th>
+                <th>Заключение комиссии</th>
+                <th>Процент готовности</th>
+                <th>Результат</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in build_request.items %}
+              <tr>
+                <td>
+                  <img
+                    src="{{ item.product.image_url }}"
+                    class="product-thumbnail"
+                    alt="{{ item.product.title }}"
+                  />
+                </td>
+                <td>{{ item.product.title }}</td>
+                <td>Работы выполнены в соответствии с требованиями</td>
+                <td>100%</td>
+                <td>5.0</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" style="text-align: center;">В заявке нет объектов</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2025 Строй контроль. Все права защищены.</p>
+    </footer>
+  </body>
+</html>
