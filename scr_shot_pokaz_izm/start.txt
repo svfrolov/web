@@ -1,0 +1,14 @@
+1. запускаем докер дсктоп
+2. docker-compose up -d
+3. python manage.py runserver
+
+После выполнения этих команд:
+    * PostgreSQL будет работать в контейнере Docker
+    * Веб-сервер Django будет запущен на http://localhost:8000/
+    * API будет доступно по адресу http://localhost:8000/api/
+    * Вы можете использовать Postman для тестирования API с помощью созданной коллекции запросов
+
+Для тестирования API через Postman:
+    * Откройте Postman Desktop
+    * Импортируйте файл postman_collection.json
+    * Выполняйте запросы из коллекции для тестирования всех функций API

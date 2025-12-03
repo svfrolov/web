@@ -1,0 +1,690 @@
+# Шпаргалка по лабораторной работе 5
+## Цель работы: Разработка базового SPA на React
+
+### Текущая структура проекта:
+```
+СТРУКТУРА ПРОЕКТА TECH_SERVICE
+==========================
+
+Корневая директория:
+------------------
+- docker-compose.yml - Конфигурация Docker для запуска PostgreSQL и Redis
+- manage.py - Утилита командной строки Django для управления проектом
+- requirements.txt - Список зависимостей Python для проекта (Django, DRF, Minio и др.)
+
+tech_service/ - Основной пакет Django-проекта:
+-------------------------------------------
+- asgi.py - Конфигурация ASGI для асинхронных веб-серверов
+- settings.py - Настройки проекта Django (БД, Redis, установленные приложения, middleware)
+- urls.py - Основные URL-маршруты проекта
+- wsgi.py - Конфигурация WSGI для синхронных веб-серверов
+- __init__.py - Инициализация пакета Python
+
+static/ - Статические файлы проекта:
+---------------------------------
+- css/style.css - Файл стилей CSS для веб-интерфейса
+
+services_app/ - Основное приложение проекта:
+----------------------------------------
+- admin.py - Настройки административного интерфейса Django
+- api_views.py - Представления API для REST-интерфейса с авторизацией и разграничением прав
+- apps.py - Конфигурация приложения Django
+- minio_utils.py - Утилиты для работы с хранилищем MinIO
+- models.py - Модели данных (BuildingObject, TechnicalSupervision, SupervisionItem)
+- serializers.py - Сериализаторы для REST API
+- tests.py - Тесты приложения
+- urls.py - URL-маршруты приложения
+- utils.py - Вспомогательные функции и утилиты
+- views.py - Представления для веб-интерфейса с авторизацией и разграничением прав
+- __init__.py - Инициализация пакета Python
+
+services_app/templates/services_app/ - Шаблоны для веб-интерфейса:
+--------------------------------------------------------------
+- build_request_detail.html - Детальная страница заявки на строительство
+- index.html - Главная страница
+- order.html - Страница заказа
+- orders.html - Список заказов
+- request.html - Страница заявки
+- service_detail.html - Детальная страница услуги/строительного объекта
+
+services_app/migrations/ - Миграции базы данных:
+--------------------------------------------
+- 0001_initial.py - Начальная миграция
+- 0002_buildingobject_constructionrequest_and_more.py - Миграция с добавлением моделей
+- __init__.py - Инициализация пакета Python
+```
+
+### Что нужно сделать для лабораторной работы 5:
+
+1. **Создать React-приложение в новой директории**:
+   ```bash
+   # Перейти в корневую директорию проекта
+   cd /путь/к/вашему/проекту
+   
+   # Создать React-приложение с TypeScript
+   npm create vite@latest frontend -- --template react-ts
+   
+   # Перейти в директорию frontend
+   cd frontend
+   
+   # Установить зависимости
+   npm install
+   ```
+
+2. **Установить необходимые библиотеки**:
+   ```bash
+   # Установить React Router для маршрутизации
+   npm install react-router-dom
+   
+   # Установить React-Bootstrap для стилизации
+   npm install react-bootstrap bootstrap
+   
+   # Установить Axios для HTTP-запросов (опционально, можно использовать fetch)
+   npm install axios
+   ```
+
+3. **Настроить прокси для решения проблемы CORS**:
+   - Создать или отредактировать файл `frontend/vite.config.ts`:
+   ```typescript
+   import { defineConfig } from 'vite'
+   import react from '@vitejs/plugin-react'
+
+   export default defineConfig({
+     plugins: [react()],
+     server: {
+       proxy: {
+         '/api': {
+           target: 'http://localhost:8000',
+           changeOrigin: true,
+         }
+       }
+     }
+   })
+   ```
+
+4. **Создать структуру компонентов**:
+   ```
+   frontend/src/
+   ├── components/
+   │   ├── Navbar.tsx - Навигационная панель
+   │   ├── Breadcrumbs.tsx - Навигационная цепочка
+   │   ├── ServiceCard.tsx - Карточка услуги
+   │   ├── ServiceFilter.tsx - Компонент фильтрации услуг
+   │   └── Footer.tsx - Подвал сайта
+   ├── pages/
+   │   ├── HomePage.tsx - Главная страница
+   │   ├── ServicesPage.tsx - Страница списка услуг
+   │   └── ServiceDetailPage.tsx - Страница с детальной информацией об услуге
+   ├── types/
+   │   └── index.ts - Типы TypeScript для проекта
+   ├── utils/
+   │   └── api.ts - Функции для работы с API
+   ├── mocks/
+   │   └── services.ts - Mock-данные для случая недоступности API
+   ├── App.tsx - Основной компонент приложения
+   ├── main.tsx - Точка входа в приложение
+   └── index.css - Глобальные стили
+   ```
+
+5. **Определить типы данных** в `frontend/src/types/index.ts`:
+   ```typescript
+   export interface BuildingObject {
+     id: number;
+     name: string;
+     description: string;
+     area: number;
+     floor_count: number;
+     location: string;
+     price: string;
+     image_url: string | null;
+   }
+
+   export interface FilterParams {
+     name?: string;
+     min_price?: string;
+     max_price?: string;
+   }
+   ```
+
+6. **Создать mock-данные** в `frontend/src/mocks/services.ts`:
+   ```typescript
+   import { BuildingObject } from '../types';
+
+   export const mockServices: BuildingObject[] = [
+     {
+       id: 1,
+       name: "Жилой дом",
+       description: "Описание жилого дома",
+       area: 150.0,
+       floor_count: 2,
+       location: "Москва",
+       price: "5000.00",
+       image_url: null
+     },
+     {
+       id: 2,
+       name: "Офисное здание",
+       description: "Описание офисного здания",
+       area: 500.0,
+       floor_count: 5,
+       location: "Санкт-Петербург",
+       price: "15000.00",
+       image_url: null
+     }
+   ];
+   ```
+
+7. **Реализовать функции API** в `frontend/src/utils/api.ts`:
+   ```typescript
+   import { BuildingObject, FilterParams } from '../types';
+   import { mockServices } from '../mocks/services';
+
+   export const fetchServices = async (filters?: FilterParams): Promise<BuildingObject[]> => {
+     try {
+       // Формируем строку запроса из фильтров
+       const queryParams = filters ? new URLSearchParams(
+         Object.entries(filters)
+           .filter(([_, value]) => value !== undefined && value !== '')
+           .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {})
+       ).toString() : '';
+       
+       const url = `/api/building-objects/${queryParams ? `?${queryParams}` : ''}`;
+       const response = await fetch(url);
+       
+       if (!response.ok) throw new Error('Network response was not ok');
+       return await response.json();
+     } catch (error) {
+       console.error('Error fetching services:', error);
+       // Возвращаем mock-данные при ошибке
+       return mockServices;
+     }
+   };
+
+   export const fetchServiceById = async (id: number): Promise<BuildingObject | undefined> => {
+     try {
+       const response = await fetch(`/api/building-objects/${id}/`);
+       if (!response.ok) throw new Error('Network response was not ok');
+       return await response.json();
+     } catch (error) {
+       console.error(`Error fetching service with id ${id}:`, error);
+       // Возвращаем mock-данные для запрошенного ID
+       return mockServices.find(service => service.id === id);
+     }
+   };
+   ```
+
+8. **Реализовать компоненты**:
+
+   - **Navbar.tsx**:
+   ```tsx
+   import { Navbar, Nav, Container } from 'react-bootstrap';
+   import { Link } from 'react-router-dom';
+
+   const AppNavbar = () => {
+     return (
+       <Navbar bg="dark" variant="dark" expand="lg">
+         <Container>
+           <Navbar.Brand as={Link} to="/">Tech Service</Navbar.Brand>
+           <Navbar.Toggle aria-controls="basic-navbar-nav" />
+           <Navbar.Collapse id="basic-navbar-nav">
+             <Nav className="me-auto">
+               <Nav.Link as={Link} to="/">Главная</Nav.Link>
+               <Nav.Link as={Link} to="/services">Услуги</Nav.Link>
+             </Nav>
+           </Navbar.Collapse>
+         </Container>
+       </Navbar>
+     );
+   };
+
+   export default AppNavbar;
+   ```
+
+   - **Breadcrumbs.tsx**:
+   ```tsx
+   import { Breadcrumb } from 'react-bootstrap';
+   import { Link, useLocation } from 'react-router-dom';
+
+   interface BreadcrumbItem {
+     name: string;
+     path: string;
+   }
+
+   interface BreadcrumbsProps {
+     items: BreadcrumbItem[];
+   }
+
+   const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
+     return (
+       <Breadcrumb className="mt-3">
+         <Breadcrumb.Item linkAs={Link} linkProps={{ to: '/' }}>
+           Главная
+         </Breadcrumb.Item>
+         {items.map((item, index) => (
+           <Breadcrumb.Item 
+             key={index}
+             active={index === items.length - 1}
+             linkAs={index === items.length - 1 ? 'span' : Link}
+             linkProps={index === items.length - 1 ? {} : { to: item.path }}
+           >
+             {item.name}
+           </Breadcrumb.Item>
+         ))}
+       </Breadcrumb>
+     );
+   };
+
+   export default Breadcrumbs;
+   ```
+
+   - **ServiceCard.tsx**:
+   ```tsx
+   import { Card, Button } from 'react-bootstrap';
+   import { Link } from 'react-router-dom';
+   import { BuildingObject } from '../types';
+
+   interface ServiceCardProps {
+     service: BuildingObject;
+   }
+
+   const ServiceCard = ({ service }: ServiceCardProps) => {
+     // Изображение по умолчанию, если service.image_url равен null
+     const defaultImage = '/placeholder-image.jpg';
+
+     return (
+       <Card className="mb-4">
+         <Card.Img 
+           variant="top" 
+           src={service.image_url || defaultImage} 
+           onError={(e) => {
+             // Если изображение не загрузилось, используем заглушку
+             e.currentTarget.src = defaultImage;
+           }}
+         />
+         <Card.Body>
+           <Card.Title>{service.name}</Card.Title>
+           <Card.Text>{service.description}</Card.Text>
+           <Card.Text>
+             <strong>Площадь:</strong> {service.area} м²<br />
+             <strong>Этажность:</strong> {service.floor_count}<br />
+             <strong>Локация:</strong> {service.location}<br />
+             <strong>Цена:</strong> {service.price} ₽
+           </Card.Text>
+           <Button 
+             as={Link} 
+             to={`/services/${service.id}`} 
+             variant="primary"
+           >
+             Подробнее
+           </Button>
+         </Card.Body>
+       </Card>
+     );
+   };
+
+   export default ServiceCard;
+   ```
+
+   - **ServiceFilter.tsx**:
+   ```tsx
+   import { useState, FormEvent } from 'react';
+   import { Form, Button, Row, Col } from 'react-bootstrap';
+   import { FilterParams } from '../types';
+
+   interface ServiceFilterProps {
+     onFilter: (filters: FilterParams) => void;
+   }
+
+   const ServiceFilter = ({ onFilter }: ServiceFilterProps) => {
+     const [name, setName] = useState<string>('');
+     const [minPrice, setMinPrice] = useState<string>('');
+     const [maxPrice, setMaxPrice] = useState<string>('');
+
+     const handleSubmit = (e: FormEvent) => {
+       e.preventDefault();
+       onFilter({
+         name: name || undefined,
+         min_price: minPrice || undefined,
+         max_price: maxPrice || undefined
+       });
+     };
+
+     const handleReset = () => {
+       setName('');
+       setMinPrice('');
+       setMaxPrice('');
+       onFilter({});
+     };
+
+     return (
+       <Form onSubmit={handleSubmit} className="mb-4">
+         <Row>
+           <Col md={4}>
+             <Form.Group className="mb-3">
+               <Form.Label>Название</Form.Label>
+               <Form.Control 
+                 type="text" 
+                 value={name} 
+                 onChange={(e) => setName(e.target.value)} 
+                 placeholder="Введите название" 
+               />
+             </Form.Group>
+           </Col>
+           <Col md={4}>
+             <Form.Group className="mb-3">
+               <Form.Label>Минимальная цена</Form.Label>
+               <Form.Control 
+                 type="number" 
+                 value={minPrice} 
+                 onChange={(e) => setMinPrice(e.target.value)} 
+                 placeholder="От" 
+               />
+             </Form.Group>
+           </Col>
+           <Col md={4}>
+             <Form.Group className="mb-3">
+               <Form.Label>Максимальная цена</Form.Label>
+               <Form.Control 
+                 type="number" 
+                 value={maxPrice} 
+                 onChange={(e) => setMaxPrice(e.target.value)} 
+                 placeholder="До" 
+               />
+             </Form.Group>
+           </Col>
+         </Row>
+         <div className="d-flex gap-2">
+           <Button variant="primary" type="submit">
+             Применить фильтры
+           </Button>
+           <Button variant="secondary" type="button" onClick={handleReset}>
+             Сбросить
+           </Button>
+         </div>
+       </Form>
+     );
+   };
+
+   export default ServiceFilter;
+   ```
+
+9. **Реализовать страницы**:
+
+   - **HomePage.tsx**:
+   ```tsx
+   import { Container, Row, Col, Card } from 'react-bootstrap';
+   import Breadcrumbs from '../components/Breadcrumbs';
+
+   const HomePage = () => {
+     return (
+       <Container>
+         <Breadcrumbs items={[]} />
+         <h1 className="my-4">Tech Service - Технический надзор за строительством</h1>
+         
+         <Row className="mb-4">
+           <Col>
+             <Card>
+               <Card.Body>
+                 <Card.Title>О нашей компании</Card.Title>
+                 <Card.Text>
+                   Мы предоставляем услуги технического надзора за строительством различных объектов.
+                   Наша команда опытных специалистов обеспечивает контроль качества на всех этапах строительства.
+                 </Card.Text>
+               </Card.Body>
+             </Card>
+           </Col>
+         </Row>
+         
+         <Row className="mb-4">
+           <Col md={4}>
+             <Card>
+               <Card.Body>
+                 <Card.Title>Качество</Card.Title>
+                 <Card.Text>
+                   Мы гарантируем высокое качество наших услуг и соответствие всем строительным нормам и правилам.
+                 </Card.Text>
+               </Card.Body>
+             </Card>
+           </Col>
+           <Col md={4}>
+             <Card>
+               <Card.Body>
+                 <Card.Title>Опыт</Card.Title>
+                 <Card.Text>
+                   Наши специалисты имеют многолетний опыт в области технического надзора за строительством.
+                 </Card.Text>
+               </Card.Body>
+             </Card>
+           </Col>
+           <Col md={4}>
+             <Card>
+               <Card.Body>
+                 <Card.Title>Надежность</Card.Title>
+                 <Card.Text>
+                   Мы всегда выполняем свои обязательства и строго соблюдаем сроки.
+                 </Card.Text>
+               </Card.Body>
+             </Card>
+           </Col>
+         </Row>
+       </Container>
+     );
+   };
+
+   export default HomePage;
+   ```
+
+   - **ServicesPage.tsx**:
+   ```tsx
+   import { useState, useEffect } from 'react';
+   import { Container, Row, Col } from 'react-bootstrap';
+   import Breadcrumbs from '../components/Breadcrumbs';
+   import ServiceCard from '../components/ServiceCard';
+   import ServiceFilter from '../components/ServiceFilter';
+   import { fetchServices } from '../utils/api';
+   import { BuildingObject, FilterParams } from '../types';
+
+   const ServicesPage = () => {
+     const [services, setServices] = useState<BuildingObject[]>([]);
+     const [loading, setLoading] = useState<boolean>(true);
+     const [filters, setFilters] = useState<FilterParams>({});
+
+     useEffect(() => {
+       const loadServices = async () => {
+         setLoading(true);
+         const data = await fetchServices(filters);
+         setServices(data);
+         setLoading(false);
+       };
+
+       loadServices();
+     }, [filters]);
+
+     const handleFilter = (newFilters: FilterParams) => {
+       setFilters(newFilters);
+     };
+
+     return (
+       <Container>
+         <Breadcrumbs items={[{ name: 'Услуги', path: '/services' }]} />
+         <h1 className="my-4">Наши услуги</h1>
+         
+         <ServiceFilter onFilter={handleFilter} />
+         
+         {loading ? (
+           <p>Загрузка...</p>
+         ) : (
+           <Row>
+             {services.length > 0 ? (
+               services.map(service => (
+                 <Col key={service.id} md={4}>
+                   <ServiceCard service={service} />
+                 </Col>
+               ))
+             ) : (
+               <Col>
+                 <p>Услуги не найдены. Попробуйте изменить параметры фильтра.</p>
+               </Col>
+             )}
+           </Row>
+         )}
+       </Container>
+     );
+   };
+
+   export default ServicesPage;
+   ```
+
+   - **ServiceDetailPage.tsx**:
+   ```tsx
+   import { useState, useEffect } from 'react';
+   import { useParams, Link } from 'react-router-dom';
+   import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+   import Breadcrumbs from '../components/Breadcrumbs';
+   import { fetchServiceById } from '../utils/api';
+   import { BuildingObject } from '../types';
+
+   const ServiceDetailPage = () => {
+     const { id } = useParams<{ id: string }>();
+     const [service, setService] = useState<BuildingObject | null>(null);
+     const [loading, setLoading] = useState<boolean>(true);
+     const [error, setError] = useState<string | null>(null);
+
+     useEffect(() => {
+       const loadService = async () => {
+         if (!id) return;
+         
+         setLoading(true);
+         try {
+           const data = await fetchServiceById(parseInt(id));
+           if (data) {
+             setService(data);
+           } else {
+             setError('Услуга не найдена');
+           }
+         } catch (err) {
+           setError('Ошибка при загрузке данных');
+         } finally {
+           setLoading(false);
+         }
+       };
+
+       loadService();
+     }, [id]);
+
+     // Изображение по умолчанию
+     const defaultImage = '/placeholder-image.jpg';
+
+     if (loading) return <Container><p>Загрузка...</p></Container>;
+     if (error || !service) return <Container><p>Ошибка: {error || 'Услуга не найдена'}</p></Container>;
+
+     return (
+       <Container>
+         <Breadcrumbs items={[
+           { name: 'Услуги', path: '/services' },
+           { name: service.name, path: `/services/${service.id}` }
+         ]} />
+         
+         <h1 className="my-4">{service.name}</h1>
+         
+         <Row>
+           <Col md={6}>
+             <img 
+               src={service.image_url || defaultImage} 
+               alt={service.name} 
+               className="img-fluid mb-4"
+               onError={(e) => {
+                 e.currentTarget.src = defaultImage;
+               }}
+             />
+           </Col>
+           <Col md={6}>
+             <Card>
+               <Card.Body>
+                 <Card.Title>Информация об объекте</Card.Title>
+                 <Card.Text>
+                   <strong>Описание:</strong> {service.description}<br />
+                   <strong>Площадь:</strong> {service.area} м²<br />
+                   <strong>Этажность:</strong> {service.floor_count}<br />
+                   <strong>Локация:</strong> {service.location}<br />
+                   <strong>Цена:</strong> {service.price} ₽
+                 </Card.Text>
+                 <Button as={Link} to="/services" variant="secondary" className="me-2">
+                   Назад к списку
+                 </Button>
+               </Card.Body>
+             </Card>
+           </Col>
+         </Row>
+       </Container>
+     );
+   };
+
+   export default ServiceDetailPage;
+   ```
+
+10. **Настроить маршрутизацию в App.tsx**:
+    ```tsx
+    import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+    import { Container } from 'react-bootstrap';
+    import Navbar from './components/Navbar';
+    import HomePage from './pages/HomePage';
+    import ServicesPage from './pages/ServicesPage';
+    import ServiceDetailPage from './pages/ServiceDetailPage';
+    import 'bootstrap/dist/css/bootstrap.min.css';
+    import './App.css';
+
+    function App() {
+      return (
+        <Router>
+          <Navbar />
+          <main className="py-4">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/services/:id" element={<ServiceDetailPage />} />
+            </Routes>
+          </main>
+        </Router>
+      );
+    }
+
+    export default App;
+    ```
+
+11. **Запустить бэкенд и фронтенд**:
+    ```bash
+    # Запустить бэкенд (из корневой директории проекта)
+    python manage.py runserver
+
+    # В отдельном терминале запустить фронтенд (из директории frontend)
+    cd frontend
+    npm run dev
+    ```
+
+12. **Проверить работу приложения**:
+    - Откройте браузер и перейдите по адресу, указанному в терминале (обычно http://localhost:5173)
+    - Проверьте работу главной страницы
+    - Проверьте страницу списка услуг с фильтрацией
+    - Проверьте детальную страницу услуги
+    - Проверьте работу приложения с отключенным бэкендом (должны отображаться mock-данные)
+
+### Дополнительные задачи:
+
+1. **Добавить загрузчик (loader)** для индикации загрузки данных
+2. **Реализовать пагинацию** для списка услуг
+3. **Добавить сортировку** по различным параметрам
+4. **Улучшить дизайн** с использованием дополнительных компонентов React-Bootstrap
+5. **Добавить анимации** для улучшения пользовательского опыта
+
+### Контрольные вопросы:
+- React: основные принципы и концепции
+- Props и состояние (state): различия и использование
+- Компонент и элемент в React: в чем разница
+- Хуки useState и useEffect: назначение и примеры использования
+- Жизненный цикл компонента в React
+- CORS и обратный прокси: что это и как решать проблемы
+- Vite и Babel: назначение и преимущества
+- BFF (Backend For Frontend) и GraphQL: концепции и применение
+- Next.js и SSG (Static Site Generation): особенности и преимущества
+- FSD (Feature-Sliced Design): архитектурная методология для фронтенда

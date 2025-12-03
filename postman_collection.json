@@ -1,0 +1,472 @@
+{
+	"info": {
+		"_postman_id": "a5b3c7d9-e1f2-4g5h-6i7j-8k9l0m1n2o3p",
+		"name": "Construction Services API",
+		"description": "API для управления строительными услугами и заявками",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Услуги (BuildingObject)",
+			"item": [
+				{
+					"name": "Получить список услуг",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/services/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", ""]
+						},
+						"description": "Получение списка всех услуг"
+					}
+				},
+				{
+					"name": "Получить список услуг с фильтрацией",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/services/?area=100&floor_count=2",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", ""],
+							"query": [
+								{
+									"key": "area",
+									"value": "100"
+								},
+								{
+									"key": "floor_count",
+									"value": "2"
+								}
+							]
+						},
+						"description": "Получение списка услуг с фильтрацией по площади и количеству этажей"
+					}
+				},
+				{
+					"name": "Получить одну услугу",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/services/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", "1", ""]
+						},
+						"description": "Получение информации об одной услуге по ID"
+					}
+				},
+				{
+					"name": "Добавить новую услугу",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "http://localhost:8000/api/services/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Новый жилой дом\",\n    \"description\": \"Строительство нового жилого дома\",\n    \"area\": \"150\",\n    \"floor_count\": 2,\n    \"location\": \"Москва, ул. Примерная, 123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Добавление новой услуги без изображения"
+					}
+				},
+				{
+					"name": "Изменить услугу",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/services/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", "1", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Обновленное название\",\n    \"description\": \"Обновленное описание\",\n    \"area\": \"200\",\n    \"floor_count\": 3,\n    \"location\": \"Москва, ул. Обновленная, 456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Изменение существующей услуги по ID"
+					}
+				},
+				{
+					"name": "Удалить услугу",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "http://localhost:8000/api/services/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", "1", ""]
+						},
+						"description": "Удаление услуги по ID (мягкое удаление)"
+					}
+				},
+				{
+					"name": "Загрузить изображение для услуги",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "http://localhost:8000/api/services/1/upload-image/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "services", "1", "upload-image", ""]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/path/to/image.jpg"
+								}
+							]
+						},
+						"description": "Загрузка изображения для услуги по ID"
+					}
+				}
+			]
+		},
+		{
+			"name": "Заявки (ConstructionRequest)",
+			"item": [
+				{
+					"name": "Получить иконку корзины",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/cart-icon/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "cart-icon", ""]
+						},
+						"description": "Получение информации о корзине (заявке-черновике) текущего пользователя"
+					}
+				},
+				{
+					"name": "Получить список заявок",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", ""]
+						},
+						"description": "Получение списка всех заявок (кроме черновиков и удаленных)"
+					}
+				},
+				{
+					"name": "Получить список заявок с фильтрацией",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/?status=submitted&formed_at_from=2023-01-01T00:00:00&formed_at_to=2023-12-31T23:59:59",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "submitted"
+								},
+								{
+									"key": "formed_at_from",
+									"value": "2023-01-01T00:00:00"
+								},
+								{
+									"key": "formed_at_to",
+									"value": "2023-12-31T23:59:59"
+								}
+							]
+						},
+						"description": "Получение списка заявок с фильтрацией по статусу и диапазону даты формирования"
+					}
+				},
+				{
+					"name": "Получить одну заявку",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", ""]
+						},
+						"description": "Получение информации об одной заявке по ID"
+					}
+				},
+				{
+					"name": "Изменить заявку",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"construction_type\": \"Капитальный ремонт\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Изменение полей заявки по ID"
+					}
+				},
+				{
+					"name": "Сформировать заявку",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/submit/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", "submit", ""]
+						},
+						"description": "Формирование заявки (изменение статуса на 'submitted')"
+					}
+				},
+				{
+					"name": "Завершить заявку",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/complete/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", "complete", ""]
+						},
+						"description": "Завершение заявки модератором (изменение статуса на 'completed')"
+					}
+				},
+				{
+					"name": "Отклонить заявку",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/reject/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", "reject", ""]
+						},
+						"description": "Отклонение заявки модератором (изменение статуса на 'rejected')"
+					}
+				},
+				{
+					"name": "Удалить заявку",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", ""]
+						},
+						"description": "Удаление заявки по ID (мягкое удаление)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Элементы заявок (ConstructionRequestItem)",
+			"item": [
+				{
+					"name": "Добавить услугу в заявку",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/add-service/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "add-service", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"building_object_id\": 1,\n    \"quantity\": 1,\n    \"order_number\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Добавление услуги в заявку-черновик"
+					}
+				},
+				{
+					"name": "Удалить услугу из заявки",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/services/1/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", "services", "1", ""]
+						},
+						"description": "Удаление услуги из заявки"
+					}
+				},
+				{
+					"name": "Изменить количество/порядок услуги в заявке",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/requests/1/services/1/update/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "requests", "1", "services", "1", "update", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 2,\n    \"order_number\": 3\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Изменение количества и порядкового номера услуги в заявке"
+					}
+				}
+			]
+		},
+		{
+			"name": "Пользователи",
+			"item": [
+				{
+					"name": "Регистрация пользователя",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "http://localhost:8000/api/users/register/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "users", "register", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"newuser\",\n    \"email\": \"newuser@example.com\",\n    \"password\": \"password123\",\n    \"first_name\": \"New\",\n    \"last_name\": \"User\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Регистрация нового пользователя"
+					}
+				},
+				{
+					"name": "Получить профиль пользователя",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8000/api/users/profile/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "users", "profile", ""]
+						},
+						"description": "Получение данных текущего пользователя"
+					}
+				},
+				{
+					"name": "Обновить профиль пользователя",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "http://localhost:8000/api/users/profile/update/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "users", "profile", "update", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Updated\",\n    \"last_name\": \"Name\",\n    \"email\": \"updated@example.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Обновление данных текущего пользователя"
+					}
+				},
+				{
+					"name": "Аутентификация пользователя",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "http://localhost:8000/api/users/login/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "users", "login", ""]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"newuser\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Аутентификация пользователя"
+					}
+				},
+				{
+					"name": "Деавторизация пользователя",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "http://localhost:8000/api/users/logout/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["api", "users", "logout", ""]
+						},
+						"description": "Деавторизация текущего пользователя"
+					}
+				}
+			]
+		}
+	]
+}
