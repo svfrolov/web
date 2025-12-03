@@ -23,6 +23,14 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .permissions import IsModeratorUser, IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import authentication_classes
+
+# Класс для отключения CSRF в API
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # Отключаем проверку CSRF для API
 
 # Оставляем существующую функцию для совместимости
 @csrf_exempt
@@ -50,6 +58,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
     }
 )
 @api_view(['POST'])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def upload_product_image(request, product_id=None):
     """
     API-эндпоинт для загрузки изображений товаров через Postman
@@ -110,6 +119,7 @@ class BuildingObjectViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name', 'area', 'floor_count', 'location']
     search_fields = ['name', 'description', 'location']
     ordering_fields = ['name', 'area', 'floor_count']
+    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
     
     def get_permissions(self):
         """
@@ -196,6 +206,7 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = TechnicalSupervisionFilter
     ordering_fields = ['created_at', 'formed_at', 'completed_at']
+    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
     
     def get_permissions(self):
         """
@@ -227,7 +238,48 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """При создании заявки автоматически устанавливаем создателя"""
-        serializer.save(creator=self.request.user, status='draft')
+        # Проверяем аутентификацию пользователя
+        if not self.request.user.is_authenticated:
+            return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        # Ищем существующие черновики
+        draft_requests = TechnicalSupervision.objects.filter(creator=self.request.user, status='draft')
+        
+        if draft_requests.exists():
+            # Если черновики есть, используем последний
+            draft_request = draft_requests.latest('created_at')
+            # Обновляем данные из запроса
+            for key, value in serializer.validated_data.items():
+                setattr(draft_request, key, value)
+            draft_request.save()
+            return draft_request
+        else:
+            # Если черновиков нет, создаем новый
+            serializer.save(creator=self.request.user, status='draft')
+    
+    def create(self, request, *args, **kwargs):
+        """Переопределяем метод создания для обработки ошибок аутентификации"""
+        if not request.user.is_authenticated:
+            return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        # Ищем существующие черновики
+        draft_requests = TechnicalSupervision.objects.filter(creator=request.user, status='draft')
+        
+        if draft_requests.exists():
+            # Если черновики есть, используем последний
+            draft_request = draft_requests.latest('created_at')
+            # Обновляем данные из запроса
+            serializer = self.get_serializer(draft_request, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            # Если черновиков нет, создаем новый
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
     def perform_destroy(self, instance):
         """Мягкое удаление - изменяем статус на 'deleted'"""
@@ -336,9 +388,12 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
                 'items_count': 0
             })
         
-        # Ищем заявку-черновик для текущего пользователя
-        try:
-            draft_request = TechnicalSupervision.objects.get(creator=current_user, status='draft')
+        # Ищем заявки-черновики для текущего пользователя
+        draft_requests = TechnicalSupervision.objects.filter(creator=current_user, status='draft')
+        
+        if draft_requests.exists():
+            # Если черновики есть, используем последний
+            draft_request = draft_requests.latest('created_at')
             items_count = draft_request.supervision_items.count()
             
             serializer = CartIconSerializer({
@@ -346,11 +401,12 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
                 'items_count': items_count
             })
             return Response(serializer.data)
-        except TechnicalSupervision.DoesNotExist:
-            # Если черновика нет, создаем новый
+        else:
+            # Если черновиков нет, создаем новый
             draft_request = TechnicalSupervision.objects.create(
                 creator=current_user,
-                status='draft'
+                status='draft',
+                created_at=timezone.now()
             )
             
             serializer = CartIconSerializer({
@@ -380,10 +436,15 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def add_service_to_request(request):
     """Метод для добавления услуги в заявку"""
     # Получаем текущего пользователя
     current_user = request.user
+    
+    # Проверяем аутентификацию
+    if not current_user.is_authenticated:
+        return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
     
     # Получаем данные из запроса
     building_object_id = request.data.get('building_object_id')
@@ -399,14 +460,20 @@ def add_service_to_request(request):
     except BuildingObject.DoesNotExist:
         return Response({'error': 'Услуга не найдена'}, status=status.HTTP_404_NOT_FOUND)
     
-    # Ищем или создаем заявку-черновик для текущего пользователя
-    draft_request, created = TechnicalSupervision.objects.get_or_create(
-        creator=current_user,
-        status='draft',
-        defaults={
-            'construction_type': 'Реконструкция'
-        }
-    )
+    # Ищем черновики для текущего пользователя
+    draft_requests = TechnicalSupervision.objects.filter(creator=current_user, status='draft')
+    
+    if draft_requests.exists():
+        # Если черновики есть, используем последний
+        draft_request = draft_requests.latest('created_at')
+    else:
+        # Если черновиков нет, создаем новый
+        draft_request = TechnicalSupervision.objects.create(
+            creator=current_user,
+            status='draft',
+            construction_type='Реконструкция',
+            created_at=timezone.now()
+        )
     
     # Проверяем, не добавлена ли уже эта услуга в заявку
     request_item, created = TechnicalSupervisionItem.objects.get_or_create(
@@ -437,10 +504,15 @@ def add_service_to_request(request):
 )
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def remove_service_from_request(request, request_id, service_id):
     """Метод для удаления услуги из заявки"""
     # Получаем текущего пользователя
     current_user = request.user
+    
+    # Проверяем аутентификацию
+    if not current_user.is_authenticated:
+        return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
     
     # Проверяем существование заявки
     try:
@@ -481,10 +553,15 @@ def remove_service_from_request(request, request_id, service_id):
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def update_request_item(request, request_id, service_id):
     """Метод для изменения количества/порядка услуги в заявке"""
     # Получаем текущего пользователя
     current_user = request.user
+    
+    # Проверяем аутентификацию
+    if not current_user.is_authenticated:
+        return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
     
     # Проверяем существование заявки
     try:
@@ -523,6 +600,7 @@ def update_request_item(request, request_id, service_id):
 class UserRegistrationView(APIView):
     """API для регистрации пользователей"""
     permission_classes = [AllowAny]
+    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
     
     @swagger_auto_schema(
         operation_description="Регистрация нового пользователя",
@@ -549,6 +627,7 @@ class UserRegistrationView(APIView):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def get_user_profile(request):
     """Метод для получения данных текущего пользователя"""
     user = request.user
@@ -567,6 +646,7 @@ def get_user_profile(request):
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def update_user_profile(request):
     """Метод для изменения данных текущего пользователя"""
     user = request.user
@@ -600,6 +680,7 @@ def update_user_profile(request):
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def user_login(request):
     """Метод для аутентификации пользователя"""
     username = request.data.get('username')
@@ -626,6 +707,7 @@ def user_login(request):
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def user_logout(request):
     """Метод для деавторизации пользователя"""
     logout(request)

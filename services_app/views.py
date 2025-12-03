@@ -189,12 +189,19 @@ def add_to_request(request, building_object_id):
                 messages.error(request, 'Объект не найден')
                 return redirect('index')
         
-        # Получаем или создаем заявку в статусе черновик
-        technical_supervision, created = TechnicalSupervision.objects.get_or_create(
-            creator=request.user,
-            status='draft',
-            defaults={'created_at': timezone.now()}
-        )
+        # Ищем черновики пользователя
+        draft_requests = TechnicalSupervision.objects.filter(creator=request.user, status='draft')
+        
+        if draft_requests.exists():
+            # Берем самый последний черновик
+            technical_supervision = draft_requests.latest('created_at')
+        else:
+            # Создаем новый черновик, если нет существующих
+            technical_supervision = TechnicalSupervision.objects.create(
+                creator=request.user,
+                status='draft',
+                created_at=timezone.now()
+            )
         
         # Пытаемся получить существующий элемент заявки
         request_item, created = TechnicalSupervisionItem.objects.get_or_create(
@@ -222,8 +229,19 @@ def add_to_request(request, building_object_id):
 @login_required
 def view_request(request):
     """Просмотр текущей заявки (корзины) через ORM"""
-    # Получаем заявку в статусе черновик для текущего пользователя
-    technical_supervision = get_object_or_404(TechnicalSupervision, creator=request.user, status='draft')
+    # Ищем черновики пользователя
+    draft_requests = TechnicalSupervision.objects.filter(creator=request.user, status='draft')
+    
+    if draft_requests.exists():
+        # Берем самый последний черновик
+        technical_supervision = draft_requests.latest('created_at')
+    else:
+        # Создаем новый черновик, если нет существующих
+        technical_supervision = TechnicalSupervision.objects.create(
+            creator=request.user,
+            status='draft',
+            created_at=timezone.now()
+        )
     
     # Получаем все элементы заявки
     request_items = technical_supervision.supervision_items.all().select_related('building_object')
