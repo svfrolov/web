@@ -50,7 +50,7 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydatabase',
+        'NAME': 'lab3db',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',

@@ -8,7 +8,8 @@ from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionIt
 from .serializers import (
     BuildingObjectSerializer, TechnicalSupervisionSerializer, 
     TechnicalSupervisionItemSerializer, UserSerializer,
-    UserRegistrationSerializer, CartIconSerializer
+    UserRegistrationSerializer, CartIconSerializer,
+    TechnicalSupervisionListSerializer
 )
 from .utils import get_current_user, get_moderator_user
 from .minio_utils import upload_image
@@ -139,11 +140,18 @@ class TechnicalSupervisionFilter(django_filters.FilterSet):
 # API для заявок (TechnicalSupervision)
 class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
     """ViewSet для работы с заявками (TechnicalSupervision)"""
-    queryset = TechnicalSupervision.objects.exclude(status='deleted').exclude(status='draft')
-    serializer_class = TechnicalSupervisionSerializer
+    queryset = TechnicalSupervision.objects.exclude(status='deleted')  # Убрали .exclude(status='draft')
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = TechnicalSupervisionFilter
     ordering_fields = ['created_at', 'formed_at', 'completed_at']
+    
+    def get_serializer_class(self):
+        """
+        Возвращает разные сериализаторы для списка и детальной информации
+        """
+        if self.action == 'list':
+            return TechnicalSupervisionListSerializer
+        return TechnicalSupervisionSerializer
     
     def perform_create(self, serializer):
         """При создании заявки автоматически устанавливаем создателя"""
@@ -230,17 +238,12 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
             })
             return Response(serializer.data)
         except TechnicalSupervision.DoesNotExist:
-            # Если черновика нет, создаем новый
-            draft_request = TechnicalSupervision.objects.create(
-                creator=current_user,
-                status='draft'
-            )
-            
+            # Если черновика нет, возвращаем специальные значения
             serializer = CartIconSerializer({
-                'request_id': draft_request.id,
+                'request_id': -1,
                 'items_count': 0
             })
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 # API для элементов заявок (TechnicalSupervisionItem)
 @api_view(['POST'])
@@ -401,3 +404,23 @@ def user_logout(request):
     """Метод для деавторизации пользователя"""
     logout(request)
     return Response({'success': True, 'message': 'Успешная деавторизация'})
+
+@api_view(['GET'])
+def get_draft_supervision(request, pk):
+    """Метод для получения черновика заявки по ID"""
+    try:
+        # Получаем текущего пользователя
+        current_user = get_current_user()
+        
+        # Ищем заявку-черновик по ID
+        supervision = TechnicalSupervision.objects.get(id=pk)
+        
+        # Проверяем, что заявка принадлежит текущему пользователю
+        if supervision.creator != current_user:
+            return Response({'error': 'Вы не можете просматривать чужие заявки'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Сериализуем и возвращаем данные
+        serializer = TechnicalSupervisionSerializer(supervision)
+        return Response(serializer.data)
+    except TechnicalSupervision.DoesNotExist:
+        return Response({'error': 'Заявка не найдена'}, status=status.HTTP_404_NOT_FOUND)

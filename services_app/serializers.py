@@ -36,6 +36,34 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
         read_only_fields = ['id']  # Защита системных полей
 
+class TechnicalSupervisionListSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка заявок без детализации услуг"""
+    creator = UserSerializer(read_only=True)
+    moderator = UserSerializer(read_only=True)
+    items_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TechnicalSupervision
+        fields = [
+            'id', 'status', 'created_at', 'formed_at', 'completed_at',
+            'creator', 'moderator', 'construction_type', 'estimated_cost',
+            'items_count'
+        ]
+        read_only_fields = [
+            'id', 'status', 'created_at', 'formed_at', 'completed_at',
+            'creator', 'moderator', 'estimated_cost'
+        ]
+
+    def get_items_count(self, obj):
+        """Получаем количество элементов в заявке"""
+        return obj.supervision_items.count()
+    
+    def to_representation(self, instance):
+        """Исключаем удаленные записи из выдачи"""
+        if instance.status == 'deleted':
+            return None
+        return super().to_representation(instance)
+
 class TechnicalSupervisionSerializer(serializers.ModelSerializer):
     """Сериализатор для модели TechnicalSupervision (заявки на технический надзор)"""
     creator = UserSerializer(read_only=True)
