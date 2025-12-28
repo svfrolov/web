@@ -1,0 +1,106 @@
+/* Шапка как в HTML шаблоне Django */
+header {
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem 0;
+  box-shadow: var(--shadow);
+}
+
+header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home-link a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.3s;
+}
+
+.home-link a:hover {
+  opacity: 0.8;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+.header-right {
+  color: white;
+  font-weight: 500;
+}
+
+/* Подхедер с корзиной */
+.subheader {
+  background-color: var(--primary-dark);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cart-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cart {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s;
+  gap: 5px;
+}
+
+.cart:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  color: white;
+}
+
+.cart.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-badge {
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  header .container {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .logo {
+    order: -1;
+  }
+  
+  .header-right {
+    margin-top: 10px;
+  }
+}
