@@ -58,6 +58,9 @@ scr_shot_pokaz_izm/
 # Additional files
 project_structure.txt
 error.txt
-zadanie.txt
-shpora.txt
-postman.txt
+Задание и исправленные замечания преподавателя.txt
+чек_лист.txt
+Тестирование.txt
+database_schema.txt
+test_checklist.md
+sequence_diagram.md

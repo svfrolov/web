@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 from . import api_views
 
@@ -9,6 +10,9 @@ router.register(r'services', api_views.BuildingObjectViewSet, basename='service'
 router.register(r'supervisions', api_views.TechnicalSupervisionViewSet, basename='supervision')
 
 urlpatterns = [
+    # API для элементов заявок (перемещено в начало)
+    path('api/supervisions/add-service/', api_views.add_service_to_request, name='add_service_to_request'),
+    
     # Стандартные маршруты для веб-интерфейса
     path('', views.index, name='index'),
     path('service/<int:id>/', views.service_detail, name='service_detail'),
@@ -18,14 +22,14 @@ urlpatterns = [
     path('delete-supervision/<int:request_id>/', views.delete_request, name='delete_request'),
     
     # API маршруты
+    path('api/supervisions/draft/<int:pk>/', api_views.get_draft_supervision, name='get_draft_supervision'),
     path('api/', include(router.urls)),
     
     # Маршруты для работы с изображениями
     path('api/upload-image/', api_views.upload_product_image, name='upload_image'),
     path('api/products/<int:product_id>/upload-image/', api_views.upload_product_image, name='upload_product_image'),
     
-    # API для элементов заявок
-    path('api/supervisions/add-service/', api_views.add_service_to_request, name='add_service_to_request'),
+    # Остальные API для элементов заявок
     path('api/supervisions/<int:request_id>/services/<int:service_id>/', api_views.remove_service_from_request, name='remove_service_from_request'),
     path('api/supervisions/<int:request_id>/services/<int:service_id>/update/', api_views.update_request_item, name='update_request_item'),
     
@@ -38,4 +42,8 @@ urlpatterns = [
     path('api/users/profile/update/', api_views.update_user_profile, name='update_user_profile'),
     path('api/users/login/', api_views.user_login, name='user_login'),
     path('api/users/logout/', api_views.user_logout, name='user_logout'),
+    
+    # JWT токены
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

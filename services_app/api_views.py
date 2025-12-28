@@ -1,16 +1,18 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.decorators import api_view, action, permission_classes, authentication_classes
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import BuildingObject, TechnicalSupervision, TechnicalSupervisionItem
 from .serializers import (
     BuildingObjectSerializer, TechnicalSupervisionSerializer, 
     TechnicalSupervisionItemSerializer, UserSerializer,
-    UserRegistrationSerializer, CartIconSerializer
+    UserRegistrationSerializer, CartIconSerializer,
+    TechnicalSupervisionListSerializer
 )
-from .utils import get_current_user, get_moderator_user
+from .utils import get_current_user, get_moderator_user, ensure_moderator_group
+from .permissions import IsModeratorUser, IsOwnerOrModerator, IsAuthenticatedOrReadOnly
 from .minio_utils import upload_image
 import uuid
 from django.utils import timezone
@@ -19,13 +21,12 @@ from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 import django_filters
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .permissions import IsModeratorUser, IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import authentication_classes
 
 # Класс для отключения CSRF в API
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -58,7 +59,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
     }
 )
 @api_view(['POST'])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([CsrfExemptSessionAuthentication, JWTAuthentication])
 def upload_product_image(request, product_id=None):
     """
     API-эндпоинт для загрузки изображений товаров через Postman
@@ -119,7 +120,7 @@ class BuildingObjectViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name', 'area', 'floor_count', 'location']
     search_fields = ['name', 'description', 'location']
     ordering_fields = ['name', 'area', 'floor_count']
-    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     
     def get_permissions(self):
         """
@@ -127,8 +128,12 @@ class BuildingObjectViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['list', 'retrieve']:
             permission_classes = [AllowAny]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsModeratorUser]
+        elif self.action == 'upload_image':
+            permission_classes = [IsModeratorUser]
         else:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAuthenticatedOrReadOnly]
         return [permission() for permission in permission_classes]
     
     def perform_destroy(self, instance):
@@ -150,7 +155,7 @@ class BuildingObjectViewSet(viewsets.ModelViewSet):
             500: 'Ошибка сервера'
         }
     )
-    @action(detail=True, methods=['post'], url_path='upload-image', permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], url_path='upload-image')
     def upload_image(self, request, pk=None):
         """Метод для загрузки изображения услуги"""
         try:
@@ -201,12 +206,19 @@ class TechnicalSupervisionFilter(django_filters.FilterSet):
 # API для заявок (TechnicalSupervision)
 class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
     """ViewSet для работы с заявками (TechnicalSupervision)"""
-    queryset = TechnicalSupervision.objects.exclude(status='deleted').exclude(status='draft')
-    serializer_class = TechnicalSupervisionSerializer
+    queryset = TechnicalSupervision.objects.exclude(status='deleted')  # Убрали .exclude(status='draft')
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = TechnicalSupervisionFilter
     ordering_fields = ['created_at', 'formed_at', 'completed_at']
-    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    
+    def get_serializer_class(self):
+        """
+        Возвращает разные сериализаторы для списка и детальной информации
+        """
+        if self.action == 'list':
+            return TechnicalSupervisionListSerializer
+        return TechnicalSupervisionSerializer
     
     def get_permissions(self):
         """
@@ -214,9 +226,9 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['list', 'retrieve']:
             permission_classes = [IsAuthenticated]
-        elif self.action in ['create', 'update', 'partial_update', 'submit_request']:
+        elif self.action in ['create', 'update', 'partial_update', 'destroy', 'submit_request']:
             permission_classes = [IsAuthenticated]
-        elif self.action in ['destroy', 'complete_request', 'reject_request']:
+        elif self.action in ['complete_request', 'reject_request']:
             permission_classes = [IsModeratorUser]
         else:
             permission_classes = [IsAuthenticated]
@@ -230,56 +242,15 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         if user.is_authenticated:
-            if user.is_staff:  # Модератор
-                return TechnicalSupervision.objects.exclude(status='deleted').exclude(status='draft')
+            if user.groups.filter(name='moderators').exists():  # Модератор
+                return TechnicalSupervision.objects.exclude(status='deleted')
             else:  # Обычный пользователь
-                return TechnicalSupervision.objects.filter(creator=user).exclude(status='deleted').exclude(status='draft')
+                return TechnicalSupervision.objects.filter(creator=user).exclude(status='deleted')
         return TechnicalSupervision.objects.none()
     
     def perform_create(self, serializer):
         """При создании заявки автоматически устанавливаем создателя"""
-        # Проверяем аутентификацию пользователя
-        if not self.request.user.is_authenticated:
-            return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
-            
-        # Ищем существующие черновики
-        draft_requests = TechnicalSupervision.objects.filter(creator=self.request.user, status='draft')
-        
-        if draft_requests.exists():
-            # Если черновики есть, используем последний
-            draft_request = draft_requests.latest('created_at')
-            # Обновляем данные из запроса
-            for key, value in serializer.validated_data.items():
-                setattr(draft_request, key, value)
-            draft_request.save()
-            return draft_request
-        else:
-            # Если черновиков нет, создаем новый
-            serializer.save(creator=self.request.user, status='draft')
-    
-    def create(self, request, *args, **kwargs):
-        """Переопределяем метод создания для обработки ошибок аутентификации"""
-        if not request.user.is_authenticated:
-            return Response({'error': 'Пользователь не аутентифицирован'}, status=status.HTTP_401_UNAUTHORIZED)
-            
-        # Ищем существующие черновики
-        draft_requests = TechnicalSupervision.objects.filter(creator=request.user, status='draft')
-        
-        if draft_requests.exists():
-            # Если черновики есть, используем последний
-            draft_request = draft_requests.latest('created_at')
-            # Обновляем данные из запроса
-            serializer = self.get_serializer(draft_request, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            # Если черновиков нет, создаем новый
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        serializer.save(creator=self.request.user, status='draft')
     
     def perform_destroy(self, instance):
         """Мягкое удаление - изменяем статус на 'deleted'"""
@@ -388,12 +359,9 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
                 'items_count': 0
             })
         
-        # Ищем заявки-черновики для текущего пользователя
-        draft_requests = TechnicalSupervision.objects.filter(creator=current_user, status='draft')
-        
-        if draft_requests.exists():
-            # Если черновики есть, используем последний
-            draft_request = draft_requests.latest('created_at')
+        # Ищем заявку-черновик для текущего пользователя
+        try:
+            draft_request = TechnicalSupervision.objects.get(creator=current_user, status='draft')
             items_count = draft_request.supervision_items.count()
             
             serializer = CartIconSerializer({
@@ -401,19 +369,13 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
                 'items_count': items_count
             })
             return Response(serializer.data)
-        else:
-            # Если черновиков нет, создаем новый
-            draft_request = TechnicalSupervision.objects.create(
-                creator=current_user,
-                status='draft',
-                created_at=timezone.now()
-            )
-            
+        except TechnicalSupervision.DoesNotExist:
+            # Если черновика нет, возвращаем специальные значения
             serializer = CartIconSerializer({
-                'request_id': draft_request.id,
+                'request_id': -1,
                 'items_count': 0
             })
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 # API для элементов заявок (TechnicalSupervisionItem)
 @swagger_auto_schema(
@@ -436,7 +398,7 @@ class TechnicalSupervisionViewSet(viewsets.ModelViewSet):
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def add_service_to_request(request):
     """Метод для добавления услуги в заявку"""
     # Получаем текущего пользователя
@@ -460,20 +422,14 @@ def add_service_to_request(request):
     except BuildingObject.DoesNotExist:
         return Response({'error': 'Услуга не найдена'}, status=status.HTTP_404_NOT_FOUND)
     
-    # Ищем черновики для текущего пользователя
-    draft_requests = TechnicalSupervision.objects.filter(creator=current_user, status='draft')
-    
-    if draft_requests.exists():
-        # Если черновики есть, используем последний
-        draft_request = draft_requests.latest('created_at')
-    else:
-        # Если черновиков нет, создаем новый
-        draft_request = TechnicalSupervision.objects.create(
-            creator=current_user,
-            status='draft',
-            construction_type='Реконструкция',
-            created_at=timezone.now()
-        )
+    # Ищем или создаем заявку-черновик для текущего пользователя
+    draft_request, created = TechnicalSupervision.objects.get_or_create(
+        creator=current_user,
+        status='draft',
+        defaults={
+            'construction_type': 'Реконструкция'
+        }
+    )
     
     # Проверяем, не добавлена ли уже эта услуга в заявку
     request_item, created = TechnicalSupervisionItem.objects.get_or_create(
@@ -504,7 +460,7 @@ def add_service_to_request(request):
 )
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def remove_service_from_request(request, request_id, service_id):
     """Метод для удаления услуги из заявки"""
     # Получаем текущего пользователя
@@ -553,7 +509,7 @@ def remove_service_from_request(request, request_id, service_id):
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def update_request_item(request, request_id, service_id):
     """Метод для изменения количества/порядка услуги в заявке"""
     # Получаем текущего пользователя
@@ -600,7 +556,7 @@ def update_request_item(request, request_id, service_id):
 class UserRegistrationView(APIView):
     """API для регистрации пользователей"""
     permission_classes = [AllowAny]
-    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     
     @swagger_auto_schema(
         operation_description="Регистрация нового пользователя",
@@ -613,8 +569,18 @@ class UserRegistrationView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            
+            # Создаем JWT токены для пользователя
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'user': serializer.data,
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
@@ -627,7 +593,7 @@ class UserRegistrationView(APIView):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def get_user_profile(request):
     """Метод для получения данных текущего пользователя"""
     user = request.user
@@ -646,7 +612,7 @@ def get_user_profile(request):
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def update_user_profile(request):
     """Метод для изменения данных текущего пользователя"""
     user = request.user
@@ -673,6 +639,13 @@ def update_user_profile(request):
             properties={
                 'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
                 'message': openapi.Schema(type=openapi.TYPE_STRING),
+                'tokens': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                        'access': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                ),
             }
         )),
         401: 'Неверные учетные данные'
@@ -680,7 +653,7 @@ def update_user_profile(request):
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def user_login(request):
     """Метод для аутентификации пользователя"""
     username = request.data.get('username')
@@ -689,7 +662,18 @@ def user_login(request):
     user = authenticate(username=username, password=password)
     if user:
         login(request, user)
-        return Response({'success': True, 'message': 'Успешная аутентификация'})
+        
+        # Создаем JWT токены для пользователя
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'success': True, 
+            'message': 'Успешная аутентификация',
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        })
     return Response({'success': False, 'message': 'Неверные учетные данные'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @swagger_auto_schema(
@@ -707,8 +691,39 @@ def user_login(request):
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
 def user_logout(request):
     """Метод для деавторизации пользователя"""
     logout(request)
     return Response({'success': True, 'message': 'Успешная деавторизация'})
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Получение черновика заявки по ID",
+    responses={
+        200: TechnicalSupervisionSerializer,
+        403: 'Доступ запрещен',
+        404: 'Заявка не найдена'
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication, SessionAuthentication])
+def get_draft_supervision(request, pk):
+    """Метод для получения черновика заявки по ID"""
+    try:
+        # Получаем текущего пользователя
+        current_user = request.user
+        
+        # Ищем заявку-черновик по ID
+        supervision = TechnicalSupervision.objects.get(id=pk)
+        
+        # Проверяем, что заявка принадлежит текущему пользователю
+        if supervision.creator != current_user:
+            return Response({'error': 'Вы не можете просматривать чужие заявки'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Сериализуем и возвращаем данные
+        serializer = TechnicalSupervisionSerializer(supervision)
+        return Response(serializer.data)
+    except TechnicalSupervision.DoesNotExist:
+        return Response({'error': 'Заявка не найдена'}, status=status.HTTP_404_NOT_FOUND)

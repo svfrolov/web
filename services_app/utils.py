@@ -1,50 +1,91 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from rest_framework.exceptions import AuthenticationFailed
 
-def get_current_user():
+def get_current_user(request=None):
     """
-    Функция-singleton для получения текущего пользователя.
-    В данной реализации пользователь указан константой.
+    Функция для получения текущего пользователя из запроса.
     
-    В реальном приложении здесь должна быть логика получения 
-    авторизованного пользователя из запроса.
+    Args:
+        request: HTTP запрос
+        
+    Returns:
+        User: объект пользователя
+        
+    Raises:
+        AuthenticationFailed: если пользователь не аутентифицирован
     """
-    # Получаем или создаем пользователя с id=1
-    user, created = User.objects.get_or_create(
-        username='default_user',
-        defaults={
-            'email': 'default@example.com',
-            'first_name': 'Default',
-            'last_name': 'User',
-            'is_staff': True,
-        }
-    )
+    if request and request.user and request.user.is_authenticated:
+        return request.user
     
-    # Если пользователь был создан, устанавливаем пароль
-    if created:
-        user.set_password('password123')
-        user.save()
+    # Для обратной совместимости, если запрос не передан
+    if not request:
+        # Получаем или создаем пользователя с id=1
+        user, created = User.objects.get_or_create(
+            username='default_user',
+            defaults={
+                'email': 'default@example.com',
+                'first_name': 'Default',
+                'last_name': 'User',
+                'is_staff': True,
+            }
+        )
+        
+        # Если пользователь был создан, устанавливаем пароль
+        if created:
+            user.set_password('password123')
+            user.save()
+        
+        return user
     
-    return user
+    raise AuthenticationFailed('Пользователь не аутентифицирован')
 
-def get_moderator_user():
+def get_moderator_user(request=None):
     """
-    Функция-singleton для получения пользователя-модератора.
-    В данной реализации модератор указан константой.
+    Функция для получения пользователя-модератора из запроса.
+    
+    Args:
+        request: HTTP запрос
+        
+    Returns:
+        User: объект пользователя-модератора
+        
+    Raises:
+        AuthenticationFailed: если пользователь не аутентифицирован или не является модератором
     """
-    # Получаем или создаем пользователя-модератора с id=2
-    moderator, created = User.objects.get_or_create(
-        username='default_moderator',
-        defaults={
-            'email': 'moderator@example.com',
-            'first_name': 'Default',
-            'last_name': 'Moderator',
-            'is_staff': True,
-        }
-    )
+    if request and request.user and request.user.is_authenticated:
+        # Проверяем, что пользователь является модератором
+        if request.user.groups.filter(name='moderators').exists():
+            return request.user
+        raise AuthenticationFailed('Пользователь не является модератором')
     
-    # Если пользователь был создан, устанавливаем пароль
-    if created:
-        moderator.set_password('password123')
-        moderator.save()
+    # Для обратной совместимости, если запрос не передан
+    if not request:
+        # Получаем или создаем пользователя-модератора с id=2
+        moderator, created = User.objects.get_or_create(
+            username='default_moderator',
+            defaults={
+                'email': 'moderator@example.com',
+                'first_name': 'Default',
+                'last_name': 'Moderator',
+                'is_staff': True,
+            }
+        )
+        
+        # Если пользователь был создан, устанавливаем пароль и добавляем в группу модераторов
+        if created:
+            moderator.set_password('password123')
+            moderator.save()
+            
+            # Создаем группу модераторов, если ее нет
+            moderators_group, _ = Group.objects.get_or_create(name='moderators')
+            moderator.groups.add(moderators_group)
+        
+        return moderator
     
-    return moderator
+    raise AuthenticationFailed('Пользователь не аутентифицирован или не является модератором')
+
+def ensure_moderator_group():
+    """
+    Функция для создания группы модераторов, если ее нет
+    """
+    Group.objects.get_or_create(name='moderators')
