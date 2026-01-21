@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import Messages from '../components/Messages';
-import '../styles/pages/catalog.css';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import Messages from "../components/Messages";
+import "../styles/pages/catalog.css";
 
 function MainPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,56 +15,56 @@ function MainPage() {
   const demoServices = [
     {
       id: 1,
-      title: 'Главный учебный корпус МГТУ',
-      description: 'г. Москва, 2-я Бауманская ул., д. 5, стр. 1',
-      category: 'Учебный корпус',
-      icon: 'fa-university',
-      area: '25000',
-      rooms: '200',
-      floor: '5',
-      total_floors: '5',
-      price: '150 000 000',
+      title: "Главный учебный корпус МГТУ",
+      description: "г. Москва, 2-я Бауманская ул., д. 5, стр. 1",
+      category: "Учебный корпус",
+      icon: "fa-university",
+      area: "25000",
+      rooms: "200",
+      floor: "5",
+      total_floors: "5",
+      price: "150 000 000",
       // Вариант 1: Django static
-      image_url: 'http://127.0.0.1:8000/static/images/building1.jpg',
+      image_url: "http://127.0.0.1:8000/static/images/building1.jpg",
       // Вариант 2: Если скопировали в React
       // image_url: '/images/building1.jpg',
-      full_description: 'Главный корпус МГТУ им. Н.Э. Баумана.',
-      location: 'Москва, 2-я Бауманская ул., 5, стр. 1',
-      features: ['Историческое здание', 'Аудитории с проекторами']
+      full_description: "Главный корпус МГТУ им. Н.Э. Баумана.",
+      location: "Москва, 2-я Бауманская ул., 5, стр. 1",
+      features: ["Историческое здание", "Аудитории с проекторами"],
     },
     {
       id: 2,
-      title: 'Учебно-лабораторный корпус МГТУ',
-      description: 'г. Москва, Рубцовская наб., д. 2/18',
-      category: 'Лабораторный корпус',
-      icon: 'fa-flask',
-      area: '18000',
-      rooms: '150',
-      floor: '7',
-      total_floors: '7',
-      price: '120 000 000',
-      image_url: 'http://127.0.0.1:8000/static/images/building2.jpg',
-      full_description: 'Современный учебно-лабораторный комплекс.',
-      location: 'Москва, Рубцовская наб., 2/18',
-      features: ['Чистые комнаты', 'Испытательные стенды']
+      title: "Учебно-лабораторный корпус МГТУ",
+      description: "г. Москва, Рубцовская наб., д. 2/18",
+      category: "Лабораторный корпус",
+      icon: "fa-flask",
+      area: "18000",
+      rooms: "150",
+      floor: "7",
+      total_floors: "7",
+      price: "120 000 000",
+      image_url: "http://127.0.0.1:8000/static/images/building2.jpg",
+      full_description: "Современный учебно-лабораторный комплекс.",
+      location: "Москва, Рубцовская наб., 2/18",
+      features: ["Чистые комнаты", "Испытательные стенды"],
     },
     {
       id: 3,
-      title: 'Спортивный комплекс МГТУ',
-      description: 'г. Москва, Госпитальная наб., д. 4/2',
-      category: 'Спорткомплекс',
-      icon: 'fa-dumbbell',
-      area: '12000',
-      rooms: '50',
-      floor: '3',
-      total_floors: '3',
-      price: '80 000 000',
+      title: "Спортивный комплекс МГТУ",
+      description: "г. Москва, Госпитальная наб., д. 4/2",
+      category: "Спорткомплекс",
+      icon: "fa-dumbbell",
+      area: "12000",
+      rooms: "50",
+      floor: "3",
+      total_floors: "3",
+      price: "80 000 000",
       // ВАЖНО: building3.png, а не .jpg!
-      image_url: 'http://127.0.0.1:8000/static/images/building3.png',
-      full_description: 'Многофункциональный спортивный комплекс.',
-      location: 'Москва, Госпитальная наб., 4/2',
-      features: ['Бассейн 25м', 'Тренажерные залы']
-    }
+      image_url: "http://127.0.0.1:8000/static/images/building3.png",
+      full_description: "Многофункциональный спортивный комплекс.",
+      location: "Москва, Госпитальная наб., 4/2",
+      features: ["Бассейн 25м", "Тренажерные залы"],
+    },
   ];
 
   // Функция для безопасной загрузки изображений
@@ -72,11 +72,11 @@ function MainPage() {
     console.log(`Ошибка загрузки: ${service.image_url}`);
     // Используем placeholder как fallback
     const colors = {
-      'Учебный корпус': '3498db',
-      'Лабораторный корпус': '2ecc71',
-      'Спорткомплекс': 'e74c3c',
+      "Учебный корпус": "3498db",
+      "Лабораторный корпус": "2ecc71",
+      Спорткомплекс: "e74c3c",
     };
-    const color = colors[service.category] || '95a5a6';
+    const color = colors[service.category] || "95a5a6";
     e.target.src = `https://via.placeholder.com/400x300/${color}/ffffff?text=${encodeURIComponent(service.category)}`;
   };
 
@@ -85,8 +85,8 @@ function MainPage() {
       setServices(demoServices);
       setFilteredServices(demoServices);
       setLoading(false);
-      
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
       setCartCount(cart.length);
     }, 500);
   }, []);
@@ -94,9 +94,10 @@ function MainPage() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      const filtered = demoServices.filter(service =>
-        service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        service.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = demoServices.filter(
+        (service) =>
+          service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          service.description.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredServices(filtered);
     } else {
@@ -105,12 +106,12 @@ function MainPage() {
   };
 
   const handleAddToCart = (serviceId) => {
-    const service = demoServices.find(s => s.id === serviceId);
+    const service = demoServices.find((s) => s.id === serviceId);
     if (!service) return;
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingItem = cart.find(item => item.id === serviceId);
-    
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existingItem = cart.find((item) => item.id === serviceId);
+
     if (existingItem) {
       existingItem.quantity += 1;
     } else {
@@ -123,30 +124,26 @@ function MainPage() {
         total_floors: service.total_floors,
         price: service.price,
         image_url: service.image_url,
-        quantity: 1
+        quantity: 1,
       });
     }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
+
+    localStorage.setItem("cart", JSON.stringify(cart));
     setCartCount(cart.length);
-    
-    setMessages([{ 
-      type: 'success', 
-      text: `"${service.title}" добавлен в заявку` 
-    }]);
-    
+
+    setMessages([
+      {
+        type: "success",
+        text: `"${service.title}" добавлен в заявку`,
+      },
+    ]);
+
     setTimeout(() => setMessages([]), 3000);
   };
 
   return (
     <div className="catalog-page">
       <Messages messages={messages} />
-      
-      <section>
-        <div className="container">
-          <h1 className="page-title">Каталог объектов МГТУ</h1>
-        </div>
-      </section>
 
       <section className="search-section">
         <div className="container">
@@ -177,10 +174,10 @@ function MainPage() {
             </div>
           ) : (
             <div className="properties-grid">
-              {filteredServices.map(service => (
+              {filteredServices.map((service) => (
                 <div key={service.id} className="property-card">
                   <div className="property-image">
-                    <img 
+                    <img
                       src={service.image_url}
                       alt={service.title}
                       onError={(e) => handleImageError(e, service)}
@@ -188,7 +185,8 @@ function MainPage() {
                   </div>
                   <div className="property-content">
                     <div className="property-type">
-                      <i className={`fas ${service.icon}`}></i> {service.category}
+                      <i className={`fas ${service.icon}`}></i>{" "}
+                      {service.category}
                     </div>
                     <h3>{service.title}</h3>
                     <p className="address">{service.description}</p>
@@ -198,10 +196,13 @@ function MainPage() {
                     </div>
                     <div className="price">{service.price} ₽</div>
                     <div className="property-actions">
-                      <Link to={`/service/${service.id}`} className="hero-back-link">
+                      <Link
+                        to={`/service/${service.id}`}
+                        className="hero-back-link"
+                      >
                         Подробнее
                       </Link>
-                      <button 
+                      <button
                         onClick={() => handleAddToCart(service.id)}
                         className="hero-back-link"
                       >

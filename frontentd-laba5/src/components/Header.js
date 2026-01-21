@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import '../styles/components/header.css';
+import React from "react";
+import { Link } from "react-router-dom";
+import "../styles/components/header.css";
 
 function Header({ user, cartCount = 0 }) {
   return (
@@ -26,7 +26,9 @@ function Header({ user, cartCount = 0 }) {
               <Link to="/request">
                 <div className="cart">
                   🛒
-                  {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                  {cartCount > 0 && (
+                    <span className="cart-badge">{cartCount}</span>
+                  )}
                 </div>
               </Link>
             ) : (
@@ -38,6 +40,13 @@ function Header({ user, cartCount = 0 }) {
           </div>
         </div>
       </div>
+
+      {/* Секция с заголовком каталога */}
+      <section className="catalog-section">
+        <div className="container">
+          <h1 className="catalog-title">Каталог строительных объектов</h1>
+        </div>
+      </section>
     </>
   );
 }
