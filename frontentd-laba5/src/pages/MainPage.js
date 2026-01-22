@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { setSearchQuery } from "../store/slices/filtersSlice";
 import Messages from "../components/Messages";
 import "../styles/pages/catalog.css";
 
 function MainPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  // Используем Redux вместо локального состояния для searchQuery
+  const dispatch = useDispatch();
+  const searchQuery = useSelector((state) => state.filters.searchQuery);
+  
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,18 +96,26 @@ function MainPage() {
     }, 500);
   }, []);
 
+  // Применяем фильтр при изменении searchQuery в Redux
+  useEffect(() => {
+    if (services.length > 0) {
+      if (searchQuery.trim()) {
+        const filtered = services.filter(
+          (service) =>
+            service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            service.description.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+        setFilteredServices(filtered);
+      } else {
+        setFilteredServices(services);
+      }
+    }
+  }, [searchQuery, services]);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      const filtered = demoServices.filter(
-        (service) =>
-          service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          service.description.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-      setFilteredServices(filtered);
-    } else {
-      setFilteredServices(demoServices);
-    }
+    // Сохраняем значение в Redux
+    dispatch(setSearchQuery(searchQuery));
   };
 
   const handleAddToCart = (serviceId) => {
@@ -152,7 +165,7 @@ function MainPage() {
               type="text"
               placeholder="Поиск объектов..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => dispatch(setSearchQuery(e.target.value))}
             />
             <button type="submit" className="search-link">
               Найти

@@ -190,27 +190,54 @@
   color: #666;
 }
 
-/* Адаптивность */
-@media (max-width: 968px) {
+/* Адаптивность - обновленные брейкпоинты */
+@media (max-width: 1024px) {
   .properties-grid {
-    grid-template-columns: repeat(2, 1fr); /* Две колонки на планшетах как в бэкенде */
+    grid-template-columns: repeat(2, 1fr); /* Две колонки на планшетах */
   }
 }
 
-@media (max-width: 640px) {
-  .properties-grid {
-    grid-template-columns: 1fr; /* Одна колонка на мобильных как в бэкенде */
-  }
-  
-  .page-title {
-    font-size: 28px; /* Меньший размер шрифта на мобильных как в бэкенде */
-  }
-  
+@media (max-width: 768px) {
   .search-form {
-    grid-template-columns: 1fr; /* Одна колонка на мобильных как в бэкенде */
+    grid-template-columns: 1fr; /* Одна колонка для формы поиска */
   }
   
   .search-link {
-    width: 100%; /* Кнопка на всю ширину на мобильных как в бэкенде */
+    width: 100%; /* Кнопка на всю ширину */
+  }
+  
+  .page-title {
+    font-size: 30px; /* Уменьшенный размер заголовка */
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .properties-grid {
+    grid-template-columns: 1fr; /* Одна колонка на мобильных */
+    gap: 20px; /* Уменьшенный отступ между карточками */
+  }
+  
+  .page-title {
+    font-size: 24px; /* Еще меньший размер шрифта на мобильных */
+  }
+  
+  .property-actions {
+    flex-direction: column; /* Кнопки в столбик на мобильных */
+    gap: 10px;
+  }
+  
+  .property-actions a,
+  .property-actions button {
+    margin: 5px 0;
+    padding: 10px;
+  }
+  
+  .property-image {
+    height: 180px; /* Уменьшенная высота изображения */
+  }
+  
+  .property-content {
+    padding: 15px; /* Уменьшенные отступы */
   }
 }

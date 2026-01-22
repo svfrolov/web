@@ -1,0 +1,44 @@
+@startuml Deployment Diagram
+
+!define RECTANGLE class
+
+skinparam componentStyle uml2
+
+node "Browser" {
+  RECTANGLE "React App" as ReactApp {
+    component "Redux Store" as ReduxStore
+    component "React Components" as ReactComponents
+    component "Service Worker" as ServiceWorker
+  }
+}
+
+node "GitHub Pages" {
+  RECTANGLE "Static Assets" as StaticAssets {
+    component "HTML/CSS/JS" as StaticFiles
+    component "Images" as Images
+    component "Manifest" as Manifest
+  }
+}
+
+node "API Server" {
+  RECTANGLE "Django Backend" as DjangoBackend {
+    component "REST API" as RestAPI
+    component "Authentication" as Auth
+    component "Business Logic" as BusinessLogic
+  }
+}
+
+node "Database" {
+  RECTANGLE "PostgreSQL" as PostgreSQL {
+    component "Tables" as Tables
+    component "Indexes" as Indexes
+  }
+}
+
+ReactApp --> StaticAssets : <<HTTPS>>
+ReactComponents --> ReduxStore : <<uses>>
+ReactComponents --> ServiceWorker : <<registers>>
+ReactApp --> RestAPI : <<HTTP/REST>>
+DjangoBackend --> PostgreSQL : <<SQL>>
+
+@enduml
