@@ -1,0 +1,216 @@
+/* Стили для каталога как в HTML */
+.catalog-page {
+  padding: 20px 0;
+}
+
+.page-title {
+  font-size: 36px; /* Размер шрифта как в бэкенде */
+  color: #333; /* Цвет текста как в бэкенде */
+  margin: 30px 0; /* Отступы как в бэкенде */
+  font-weight: normal; /* Обычный вес шрифта как в бэкенде */
+  font-family: Arial, sans-serif; /* Шрифт как в бэкенде */
+  text-align: left; /* Выравнивание по левому краю как в бэкенде */
+}
+
+/* Секция поиска */
+.search-section {
+  background-color: transparent; /* Прозрачный фон как в бэкенде */
+  padding: 30px 0; /* Отступы как в бэкенде */
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: grid;
+  grid-template-columns: 1fr auto; /* Первая колонка растягивается, вторая по размеру контента */
+  gap: 15px;
+  max-width: 100%; /* Растягиваем на всю ширину как в бэкенде */
+  margin: 0; /* Убираем автоматические отступы */
+}
+
+.search-form input {
+  width: 100%;
+  padding: 15px 20px; /* Отступы как в бэкенде */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.search-form input:focus {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
+.search-link {
+  background: #007bff; /* Синий цвет как в бэкенде */
+  color: white;
+  border: none;
+  padding: 15px 25px; /* Отступы как в бэкенде */
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.search-link:hover {
+  background-color: #0056b3; /* Темно-синий при наведении как в бэкенде */
+  text-decoration: none;
+}
+
+.search-results {
+  margin: 15px 0 0;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Сетка объектов */
+.properties-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Три колонки как в бэкенде */
+  gap: 30px; /* Отступ между карточками как в бэкенде */
+  margin-top: 30px;
+  margin-bottom: 60px; /* Отступ снизу как в бэкенде */
+}
+
+.property-card {
+  background: white;
+  border-radius: 12px; /* Скругление углов как в бэкенде */
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Тень как в бэкенде */
+  transition: transform 0.3s;
+}
+
+.property-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.property-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.property-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.property-content {
+  padding: 20px;
+}
+
+.property-type {
+  display: inline-block;
+  background-color: #e3f2fd; /* Светло-голубой фон как в бэкенде */
+  color: #1976d2; /* Синий цвет текста как в бэкенде */
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.property-content h3 {
+  font-size: 18px; /* Размер шрифта как в бэкенде */
+  margin-bottom: 8px;
+  color: #333; /* Цвет текста как в бэкенде */
+}
+
+.address {
+  color: #666; /* Цвет текста как в бэкенде */
+  font-size: 13px; /* Размер шрифта как в бэкенде */
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.specs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #666;
+}
+
+.price {
+  color: #007bff; /* Синий цвет как в бэкенде */
+  font-size: 20px; /* Размер шрифта как в бэкенде */
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.property-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.property-actions a,
+.property-actions button {
+  flex: 1;
+  margin: 0 5px;
+  text-align: center;
+  font-weight: normal; /* Обычный вес шрифта как в бэкенде */
+  text-decoration: none;
+  color: #007bff; /* Синий цвет как в бэкенде */
+  background: transparent; /* Прозрачный фон */
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.property-actions a:hover,
+.property-actions button:hover {
+  text-decoration: underline;
+}
+
+/* Сообщение об отсутствии объектов */
+.no-services {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 50px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.no-services h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.no-services p {
+  color: #666;
+}
+
+/* Адаптивность */
+@media (max-width: 968px) {
+  .properties-grid {
+    grid-template-columns: repeat(2, 1fr); /* Две колонки на планшетах как в бэкенде */
+  }
+}
+
+@media (max-width: 640px) {
+  .properties-grid {
+    grid-template-columns: 1fr; /* Одна колонка на мобильных как в бэкенде */
+  }
+  
+  .page-title {
+    font-size: 28px; /* Меньший размер шрифта на мобильных как в бэкенде */
+  }
+  
+  .search-form {
+    grid-template-columns: 1fr; /* Одна колонка на мобильных как в бэкенде */
+  }
+  
+  .search-link {
+    width: 100%; /* Кнопка на всю ширину на мобильных как в бэкенде */
+  }
+}

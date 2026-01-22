@@ -1,0 +1,14 @@
+/* Подвал как в HTML шаблоне Django */
+footer {
+  background-color: var(--primary-dark);
+  color: white;
+  padding: 2rem 0;
+  text-align: center;
+  margin-top: 3rem;
+}
+
+footer p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}

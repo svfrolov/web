@@ -1,0 +1,141 @@
+/* Стили для страницы заявки */
+.request-page {
+  padding: 40px 0;
+}
+
+.request-container {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: var(--shadow);
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.request-title {
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.request-status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.status-draft {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.status-submitted {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-deleted {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.request-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.request-table th,
+.request-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.request-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.product-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.request-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.request-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.empty-request {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--gray);
+}
+
+.empty-request h3 {
+  color: var(--primary);
+  margin-bottom: 15px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .request-table {
+    font-size: 14px;
+  }
+  
+  .request-table th,
+  .request-table td {
+    padding: 10px;
+  }
+  
+  .request-actions {
+    flex-direction: column;
+  }
+}
