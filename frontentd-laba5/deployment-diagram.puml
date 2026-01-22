@@ -1,44 +1,71 @@
 @startuml Deployment Diagram
 
+' Определение стилей для диаграммы
 !define RECTANGLE class
 
+' Настройка стиля компонентов в UML 2.0
 skinparam componentStyle uml2
 
+' Узел Browser - представляет клиентскую часть приложения
 node "Browser" {
+  ' Контейнер для React-приложения
   RECTANGLE "React App" as ReactApp {
+    ' Хранилище состояния Redux
     component "Redux Store" as ReduxStore
+    ' Компоненты React-приложения
     component "React Components" as ReactComponents
+    ' Service Worker для PWA функциональности
     component "Service Worker" as ServiceWorker
   }
 }
 
+' Узел GitHub Pages - хостинг для статических файлов
 node "GitHub Pages" {
+  ' Контейнер для статических ресурсов
   RECTANGLE "Static Assets" as StaticAssets {
+    ' HTML/CSS/JS файлы приложения
     component "HTML/CSS/JS" as StaticFiles
+    ' Изображения и медиа-файлы
     component "Images" as Images
+    ' Файл манифеста для PWA
     component "Manifest" as Manifest
   }
 }
 
+' Узел API Server - серверная часть приложения
 node "API Server" {
+  ' Контейнер для Django-бэкенда
   RECTANGLE "Django Backend" as DjangoBackend {
+    ' REST API для взаимодействия с клиентом
     component "REST API" as RestAPI
+    ' Система аутентификации и авторизации
     component "Authentication" as Auth
+    ' Бизнес-логика приложения
     component "Business Logic" as BusinessLogic
   }
 }
 
+' Узел Database - база данных приложения
 node "Database" {
+  ' Контейнер для PostgreSQL
   RECTANGLE "PostgreSQL" as PostgreSQL {
+    ' Таблицы базы данных
     component "Tables" as Tables
+    ' Индексы для оптимизации запросов
     component "Indexes" as Indexes
   }
 }
 
+' Связи между компонентами системы
+' Связь между React App и статическими ресурсами через HTTPS
 ReactApp --> StaticAssets : <<HTTPS>>
+' Компоненты React используют Redux Store для управления состоянием
 ReactComponents --> ReduxStore : <<uses>>
+' Компоненты React регистрируют Service Worker
 ReactComponents --> ServiceWorker : <<registers>>
+' React App взаимодействует с REST API через HTTP/REST
 ReactApp --> RestAPI : <<HTTP/REST>>
+' Django Backend взаимодействует с PostgreSQL через SQL
 DjangoBackend --> PostgreSQL : <<SQL>>
 
 @enduml
